@@ -1,0 +1,6 @@
+[Unit]
+Description=Homeboard: riavvio quotidiano del kiosk (memoria pulita)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --user restart homeboard-kiosk.service

@@ -1,0 +1,4 @@
+# ~/.config/labwc/autostart: passa l'ambiente Wayland a systemd e avvia la sessione Homeboard
+# (kiosk, tasti, timer). Da qui in poi ci pensa systemd, compresi i riavvii dopo un crash.
+systemctl --user import-environment WAYLAND_DISPLAY XDG_RUNTIME_DIR
+systemctl --user start homeboard-session.target

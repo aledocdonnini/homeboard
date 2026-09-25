@@ -1,0 +1,18 @@
+# ——— Homeboard: da aggiungere in fondo a /boot/firmware/config.txt (lo fa install.sh) ———
+
+# I sei tasti di preselezione della Crezar: ognuno fra un GPIO e GND, pull-up interno, attivo basso.
+# Arrivano a Chromium come i tasti 1-6 della tastiera (keycode Linux: KEY_1 = 2 … KEY_6 = 7).
+# GPIO (numerazione BCM) scelti lontani da I2C, SPI e UART; pin fisici fra parentesi.
+dtoverlay=gpio-key,gpio=5,active_low=1,gpio_pull=up,keycode=2,label="canale-1"   # pin 29
+dtoverlay=gpio-key,gpio=6,active_low=1,gpio_pull=up,keycode=3,label="canale-2"   # pin 31
+dtoverlay=gpio-key,gpio=13,active_low=1,gpio_pull=up,keycode=4,label="canale-3"  # pin 33
+dtoverlay=gpio-key,gpio=19,active_low=1,gpio_pull=up,keycode=5,label="canale-4"  # pin 35
+dtoverlay=gpio-key,gpio=26,active_low=1,gpio_pull=up,keycode=6,label="canale-5"  # pin 37
+dtoverlay=gpio-key,gpio=16,active_low=1,gpio_pull=up,keycode=7,label="canale-6"  # pin 36
+
+# Watchdog hardware: se il sistema si pianta, il Pi si riavvia da solo (con RuntimeWatchdogSec in systemd).
+dtparam=watchdog=on
+
+# Niente schermata arcobaleno all'avvio.
+disable_splash=1
+# ——— fine Homeboard ———

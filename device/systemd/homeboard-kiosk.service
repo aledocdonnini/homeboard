@@ -1,0 +1,11 @@
+[Unit]
+Description=Homeboard: Chromium in kiosk sulla vista TV
+PartOf=homeboard-session.target
+After=homeboard-piper.service
+# Se Chromium va in crash in loop, systemd non smette di riprovare: la TV deve tornare da sola.
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=%h/homeboard/bin/kiosk.sh
+Restart=always
+RestartSec=3

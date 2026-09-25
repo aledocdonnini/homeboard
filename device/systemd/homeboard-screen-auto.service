@@ -1,0 +1,7 @@
+[Unit]
+Description=Homeboard: pannello acceso o spento secondo l'ora, all'avvio
+PartOf=homeboard-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/homeboard/bin/screen.sh auto

@@ -1,0 +1,9 @@
+[Unit]
+Description=Homeboard: riaccende il pannello alle @NIGHT_END@
+
+[Timer]
+# L'orario lo scrive install.sh da homeboard.env.
+OnCalendar=*-*-* @NIGHT_END@:00
+
+[Install]
+WantedBy=timers.target

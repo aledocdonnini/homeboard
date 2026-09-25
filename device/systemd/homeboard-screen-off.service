@@ -1,0 +1,6 @@
+[Unit]
+Description=Homeboard: spegne il pannello
+
+[Service]
+Type=oneshot
+ExecStart=%h/homeboard/bin/screen.sh off

@@ -1,0 +1,10 @@
+{
+  "LocalNetworkAccessAllowedForUrls": ["https://homeboard.vercel.app"],
+  "AutoplayAllowlist": ["https://homeboard.vercel.app"],
+  "NotificationsBlockedForUrls": ["*"],
+  "TranslateEnabled": false,
+  "PasswordManagerEnabled": false,
+  "BrowserSignin": 0,
+  "SyncDisabled": true,
+  "MetricsReportingEnabled": false
+}

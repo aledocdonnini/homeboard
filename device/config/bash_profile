@@ -1,0 +1,5 @@
+
+# ——— Homeboard: avvia labwc sulla console 1 dopo l'autologin ———
+if [ -z "${WAYLAND_DISPLAY:-}" ] && [ "$(tty)" = "/dev/tty1" ]; then
+  exec labwc
+fi
