@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+  Homeboard: base moderna e molto leggibile (si usa con una mano, al supermercato),
+  con i richiami alla TV Crezar: i quattro colori del Televideo come colori dei canali,
+  i tasti di preselezione nella barra in basso, i numeri in stile OSD.
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  Regole:
+  - Un canale = un colore. Su ogni pagina compare solo il colore del suo canale.
+  - I colori dei canali sono campiture con il loro testo "on-*" sopra, mai testo colorato sullo sfondo.
+  - Il giallo su sfondo chiaro si stacca poco (1,8:1): ogni elemento giallo ha un bordo ink.
+  - Arrotondamento unico: 6px per tutti i controlli; il palco di Roby ha il suo (22%).
+
+  Contrasti misurati (WCAG), chiaro / scuro:
+    ink su paper 16,3 / 16,5 · muted su paper 5,9 / 7,5 · edge su paper 3,5 / 4,1 (bordi dei campi)
+    on-verde 5,6 · on-giallo 10,1 · on-rosso 4,5 · on-blu 5,6
+*/
+
+@theme {
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-osd: var(--font-vt323), ui-monospace, monospace;
+
+  --color-paper: #f5f6f7;
+  --color-surface: #ffffff;
+  --color-ink: #17191e;
+  --color-muted: #5a606a;
+  --color-line: #c9cdd3;
+  --color-edge: #7d838d;
+  --color-danger: #b3261e;
+
+  --color-verde: #2e9e57;
+  --color-on-verde: #0d0e11;
+  --color-giallo: #e6b530;
+  --color-on-giallo: #0d0e11;
+  --color-rosso: #d2453a;
+  --color-on-rosso: #ffffff;
+  --color-blu: #2f62cc;
+  --color-on-blu: #ffffff;
+
+  --radius-control: 6px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-paper: #0d0e11;
+    --color-surface: #17191d;
+    --color-ink: #ecedef;
+    --color-muted: #9ca2ab;
+    --color-line: #3a3e45;
+    --color-edge: #6e747d;
+    --color-danger: #ff8a80;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Il colore del canale della pagina: lo impostano i contenitori con data-channel. */
+@layer base {
+  [data-channel="spesa"] { --channel: var(--color-verde); --on-channel: var(--color-on-verde); }
+  [data-channel="promemoria"] { --channel: var(--color-giallo); --on-channel: var(--color-on-giallo); }
+  [data-channel="scadenze"] { --channel: var(--color-rosso); --on-channel: var(--color-on-rosso); }
+  [data-channel="casa"] { --channel: var(--color-blu); --on-channel: var(--color-on-blu); }
+
+  html {
+    color-scheme: light dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  ::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
 }
+
+@utility bg-channel { background-color: var(--channel); }
+@utility text-on-channel { color: var(--on-channel); }
+@utility border-channel { border-color: var(--channel); }
+@utility accent-channel { accent-color: var(--channel); }

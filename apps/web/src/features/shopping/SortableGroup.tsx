@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { DotsSixVertical } from "@phosphor-icons/react";
 import type { Item } from "./items";
 
 type Drag = { id: string; from: number; startY: number; dy: number; mids: number[] };
@@ -41,7 +42,7 @@ export default function SortableGroup({ items, onMove, render }: {
           key={item.id}
           ref={(el) => { if (el) rows.current.set(item.id, el); else rows.current.delete(item.id); }}
           style={drag?.id === item.id ? { transform: `translateY(${drag.dy}px)`, position: "relative", zIndex: 1 } : undefined}
-          className={`flex items-center gap-1 rounded-lg ${drag?.id === item.id ? "bg-background shadow-lg" : ""}`}
+          className={`flex items-center gap-1 rounded-control ${drag?.id === item.id ? "bg-surface shadow-[0_8px_24px_rgb(23_25_30/0.18)]" : ""}`}
         >
           <div className="min-w-0 flex-1">{render(item)}</div>
           {items.length < 2 ? <div className="size-11 shrink-0" /> : (
@@ -49,7 +50,7 @@ export default function SortableGroup({ items, onMove, render }: {
               type="button"
               data-handle
               aria-label={`Sposta ${item.name} (frecce su e giù)`}
-              className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center opacity-50"
+              className="flex size-11 shrink-0 cursor-grab touch-none items-center justify-center text-muted"
               onPointerDown={(e) => {
                 e.currentTarget.setPointerCapture(e.pointerId);
                 const mids = items.map((i) => {
@@ -72,9 +73,7 @@ export default function SortableGroup({ items, onMove, render }: {
                 commit(item.id, index, to);
               }}
             >
-              <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="currentColor">
-                {[6, 12, 18].map((y) => [9, 15].map((x) => <circle key={`${x}${y}`} cx={x} cy={y} r="1.6" />))}
-              </svg>
+              <DotsSixVertical aria-hidden weight="bold" className="size-6" />
             </button>
           )}
         </li>

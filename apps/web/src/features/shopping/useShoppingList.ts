@@ -16,6 +16,7 @@ export function useShoppingList(householdId: string) {
   const [items, setItems] = useState<Item[]>([]);
   const [stats, setStats] = useState<Stat[]>([]);
   const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
 
   const refetch = useCallback(async () => {
     const [list, sugg] = await Promise.all([
@@ -26,6 +27,7 @@ export function useShoppingList(householdId: string) {
     if (list.error || sugg.error) return setError((list.error ?? sugg.error)!.message);
     setItems((prev) => list.data.reduce(mergeRow, prev));
     setStats(sugg.data);
+    setLoaded(true);
   }, [householdId]);
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export function useShoppingList(householdId: string) {
   }, [items, fail]);
 
   return {
-    items, stats, error, add, clearChecked,
+    items, stats, error, loaded, add, clearChecked,
     setChecked: (id: string, checked: boolean) => update(id, { checked }),
     setCategory: (id: string, category: string) => update(id, { category }),
     /** Sposta fra due vicini dello stesso reparto (undefined = in cima / in fondo). */

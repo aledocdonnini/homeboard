@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Button from "@/components/ui/Button";
+import Field from "@/components/ui/Field";
+import RobyTile from "@/components/ui/RobyTile";
 import { useSession } from "./useSession";
 
 // Pagina di arrivo dopo l'accesso: solo percorsi interni.
@@ -34,7 +37,7 @@ export default function LoginForm() {
       options: { emailRedirectTo: `${location.origin}/accedi?next=${encodeURIComponent(nextPath())}` },
     });
     setBusy(false);
-    if (error) setError(error.message);
+    if (error) setError(`Email non inviata: ${error.message}`);
     else setSent(true);
   }
 
@@ -44,40 +47,34 @@ export default function LoginForm() {
     setError("");
     const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setBusy(false);
-    if (error) setError("Codice non valido o scaduto.");
+    if (error) setError("Codice non valido o scaduto. Controlla l'ultima email o chiedine uno nuovo.");
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6">
-      <h1 className="text-3xl font-semibold">Accedi</h1>
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-4 py-10">
+      <div className="flex flex-col gap-4">
+        <RobyTile expression={sent ? "listening" : "happy"} />
+        <h1 className="text-4xl font-bold tracking-tight">Accedi a Homeboard</h1>
+        <p className="text-muted">
+          {sent ? <>Ti ho scritto a <strong className="text-ink">{email}</strong>. Scrivi qui il codice, oppure apri il link nella mail.</>
+            : "Ti mando un codice via email. Niente password da ricordare."}
+        </p>
+      </div>
       {!sent ? (
-        <form onSubmit={sendCode} className="flex flex-col gap-3">
-          <label htmlFor="email">La tua email</label>
-          <input
-            id="email" type="email" required autoComplete="email" inputMode="email"
-            value={email} onChange={(e) => setEmail(e.target.value)}
-            className="rounded-lg border bg-transparent p-3 text-lg"
-          />
-          <button disabled={busy} className="rounded-full bg-foreground p-3 text-background disabled:opacity-50">
-            {busy ? "Invio…" : "Mandami il codice"}
-          </button>
+        <form onSubmit={sendCode} className="flex flex-col gap-4">
+          <Field id="email" label="Email" type="email" required autoComplete="email" inputMode="email"
+            value={email} onChange={(e) => setEmail(e.target.value)} error={error} />
+          <Button type="submit" disabled={busy}>{busy ? "Invio in corso" : "Mandami il codice"}</Button>
         </form>
       ) : (
-        <form onSubmit={verify} className="flex flex-col gap-3">
-          <p>Ti ho scritto a <strong>{email}</strong>. Inserisci il codice, oppure apri il link nella mail.</p>
-          <label htmlFor="code">Codice</label>
-          <input
-            id="code" required autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6}
-            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            className="rounded-lg border bg-transparent p-3 text-center font-mono text-2xl tracking-[0.4em]"
-          />
-          <button disabled={busy} className="rounded-full bg-foreground p-3 text-background disabled:opacity-50">
-            {busy ? "Verifica…" : "Entra"}
-          </button>
-          <button type="button" onClick={() => setSent(false)} className="p-2 underline">Cambia email</button>
+        <form onSubmit={verify} className="flex flex-col gap-4">
+          <Field id="code" label="Codice di 6 cifre" required autoComplete="one-time-code" inputMode="numeric"
+            pattern="[0-9]{6}" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            error={error} className="text-center font-osd text-4xl tracking-[0.3em]" />
+          <Button type="submit" disabled={busy}>{busy ? "Verifica in corso" : "Entra"}</Button>
+          <Button variant="link" onClick={() => { setSent(false); setError(""); }} className="self-start">Usa un’altra email</Button>
         </form>
       )}
-      <p role="alert" className="text-red-600 dark:text-red-400">{error}</p>
     </main>
   );
 }

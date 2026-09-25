@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/features/auth/useSession";
+import RobyTile from "@/components/ui/RobyTile";
 
 export default function AcceptInvite() {
   const { token } = useParams<{ token: string }>();
@@ -17,15 +18,16 @@ export default function AcceptInvite() {
     if (!session || done.current) return;
     done.current = true;
     supabase.rpc("accept_invite", { invite: token }).then(({ error }) => {
-      if (error) setError(error.code === "P0002" ? "Questo invito non è valido o è scaduto. Chiedine uno nuovo." : error.message);
+      if (error) setError(error.code === "P0002" ? "Questo invito è già stato usato o è scaduto. Chiedine uno nuovo a chi te l'ha mandato." : error.message);
       else router.replace("/");
     });
   }, [session, token, router]);
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 p-6">
-      <h1 className="text-3xl font-semibold">Invito</h1>
-      {error ? <p role="alert">{error}</p> : <p aria-live="polite">Ti sto aggiungendo alla casa…</p>}
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 px-4 py-10">
+      <RobyTile expression={error ? "confused" : "surprised"} />
+      <h1 className="text-4xl font-bold tracking-tight">{error ? "Invito non valido" : "Ti aggiungo alla casa"}</h1>
+      <p role={error ? "alert" : "status"} className="text-muted">{error || "Un attimo, sto controllando l'invito."}</p>
     </main>
   );
 }
