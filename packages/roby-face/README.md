@@ -19,9 +19,10 @@ await roby.speak("Domani scade il bollo dell'auto.", { expression: "worried" });
 |---|---|---|
 | `expression` | una delle 24 espressioni in `EXPRESSIONS` (`neutral`, `happy`, `worried`, `sleepy`, `surprised`, …) | `neutral` |
 | `mode` | `idle`, `talking`, `listening` | `idle` |
-| `color`, `background` | colori CSS | `#FAF6EF`, `#131518` |
+| `color`, `background` | colori CSS (`color` accetta anche `currentColor`) | `#FAF6EF`, `#131518` |
 | `motion` | intensità del movimento, 0 = fermo | `2.5` (0 con `prefers-reduced-motion`) |
 | `happy-shape` | `flat`, `arc`, `sharp-arc` | `flat` |
+| `no-glow` | presente o assente: toglie l'alone azzurro (per sfondi chiari) | assente |
 
 L'elemento è quadrato (`aspect-ratio: 1`): basta dargli la larghezza. Lo sfondo interno si raggiunge con `::part(stage)`.
 

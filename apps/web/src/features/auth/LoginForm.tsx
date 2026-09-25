@@ -70,7 +70,7 @@ export default function LoginForm() {
         <form onSubmit={verify} className="flex flex-col gap-4">
           <Field id="code" label="Codice di 6 cifre" required autoComplete="one-time-code" inputMode="numeric"
             pattern="[0-9]{6}" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            error={error} className="text-center font-osd text-4xl tracking-[0.3em]" />
+            error={error} className="text-center font-dots text-4xl font-bold tracking-[0.3em]" />
           <Button type="submit" disabled={busy}>{busy ? "Verifica in corso" : "Entra"}</Button>
           <Button variant="link" onClick={() => { setSent(false); setError(""); }} className="self-start">Usa un’altra email</Button>
         </form>

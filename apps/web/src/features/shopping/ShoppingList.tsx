@@ -37,7 +37,7 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
   }
 
   return (
-    <main data-channel="spesa" className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-4 pb-32">
+    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-4 pb-32">
       <PageHeader title="Spesa">
         {list.loaded && <Osd value={todo} label="da prendere" />}
       </PageHeader>

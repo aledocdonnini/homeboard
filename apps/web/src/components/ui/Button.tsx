@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 
 const VARIANTS = {
-  primary: "bg-ink text-paper",
+  primary: "bg-accent text-on-accent",
   quiet: "border border-edge bg-surface text-ink",
   link: "min-h-11 px-0 underline underline-offset-4 font-normal",
 };

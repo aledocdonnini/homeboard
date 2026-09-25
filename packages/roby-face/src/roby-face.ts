@@ -26,18 +26,19 @@ export interface SpeakOptions {
 }
 
 /**
- * <roby-face expression="happy" mode="idle" color="#FAF6EF" background="#131518" motion="2.5" happy-shape="flat">
+ * <roby-face expression="happy" mode="idle" color="#FAF6EF" background="#131518" motion="2.5" happy-shape="flat" no-glow>
  *
  * Eventi (bubbles, composed): roby-expression {detail: {expression}}, roby-speechstart {detail: {text}}, roby-speechend {detail: {text, error?}}.
  */
 export class RobyFaceElement extends HTMLElement {
-  static observedAttributes = ["expression", "mode", "color", "background", "motion", "happy-shape"];
+  static observedAttributes = ["expression", "mode", "color", "background", "motion", "happy-shape", "no-glow"];
 
   /** Da dove arriva la voce: speechSynthesis se non impostato. */
   voice: VoiceProvider = webSpeechProvider;
 
   #face?: RobotFace;
   #stage: HTMLDivElement;
+  #glowId = `roby-glow-${++uid}`;
   #speech?: AbortController;
   #reduced = matchMedia("(prefers-reduced-motion: reduce)");
   #onReduced = () => this.#applyOptions();
@@ -54,9 +55,7 @@ export class RobyFaceElement extends HTMLElement {
     if (this.#face) return;
     this.#face = createRobotFace(this.#stage, { radius: 0 });
     const svg = this.#stage.querySelector("svg")!;
-    const id = `roby-glow-${++uid}`;
-    svg.insertAdjacentHTML("afterbegin", glowFilter(id));
-    svg.querySelectorAll("path").forEach((p) => p.setAttribute("filter", `url(#${id})`));
+    svg.insertAdjacentHTML("afterbegin", glowFilter(this.#glowId));
     this.#applyOptions();
     this.#applyExpression();
     this.#face.setMode(this.mode);
@@ -145,6 +144,9 @@ export class RobyFaceElement extends HTMLElement {
       happyShape: (this.getAttribute("happy-shape") as HappyShape | null) ?? DEFAULTS.happyShape,
       motion: this.#reduced.matches ? 0 : Number.isFinite(motion) ? motion : DEFAULTS.motion,
     });
+    // no-glow: occhi pieni senza alone, per sfondi chiari (e schermi lenti).
+    this.#stage.querySelectorAll("path").forEach((p) =>
+      this.hasAttribute("no-glow") ? p.removeAttribute("filter") : p.setAttribute("filter", `url(#${this.#glowId})`));
   }
 
   #emit(type: string, detail: object) {

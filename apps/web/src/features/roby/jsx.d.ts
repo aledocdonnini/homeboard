@@ -12,6 +12,7 @@ declare module "react" {
         background?: string;
         motion?: number;
         "happy-shape"?: HappyShape;
+        "no-glow"?: "";
       };
     }
   }

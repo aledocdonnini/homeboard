@@ -1,64 +1,57 @@
 @import "tailwindcss";
 
 /*
-  Homeboard: base moderna e molto leggibile (si usa con una mano, al supermercato),
-  con i richiami alla TV Crezar: i quattro colori del Televideo come colori dei canali,
-  i tasti di preselezione nella barra in basso, i numeri in stile OSD.
+  Homeboard: un cruscotto di apparecchi alla Braun, degli stessi anni della TV Crezar.
+  Plastica grigia, nero, un solo arancio. Il numero è il contenuto: enorme, con un'etichetta piccola.
 
   Regole:
-  - Un canale = un colore. Su ogni pagina compare solo il colore del suo canale.
-  - I colori dei canali sono campiture con il loro testo "on-*" sopra, mai testo colorato sullo sfondo.
-  - Il giallo su sfondo chiaro si stacca poco (1,8:1): ogni elemento giallo ha un bordo ink.
-  - Arrotondamento unico: 6px per tutti i controlli; il palco di Roby ha il suo (22%).
+  - L'arancio segna una cosa sola per schermata: "adesso" (oggi, i secondi, ciò che scade) o l'azione principale.
+    Come campitura porta testo ink sopra; come testo sul grigio chiaro si usa accent-text (più scuro).
+  - Niente card con ombre: moduli piatti su surface, blocchi separati da linee piene.
+  - Arrotondamento: 6px i controlli, 14px i moduli, 22% il palco di Roby.
+  - Quattro strumenti, sempre quelli: pallini, righello a tacche, barre, cifre a punti.
 
   Contrasti misurati (WCAG), chiaro / scuro:
-    ink su paper 16,3 / 16,5 · muted su paper 5,9 / 7,5 · edge su paper 3,5 / 4,1 (bordi dei campi)
-    on-verde 5,6 · on-giallo 10,1 · on-rosso 4,5 · on-blu 5,6
+    ink su paper 14,5 / 16,4 · muted 4,9 / 7,2 · edge 3,5 / 3,7 (bordi dei controlli)
+    accent-text su paper 4,6 / 6,7 · ink su accent 5,9 / 6,5
 */
 
 @theme {
-  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
-  --font-osd: var(--font-vt323), ui-monospace, monospace;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-dots: var(--font-doto), ui-monospace, monospace;
 
-  --color-paper: #f5f6f7;
-  --color-surface: #ffffff;
-  --color-ink: #17191e;
-  --color-muted: #5a606a;
-  --color-line: #c9cdd3;
-  --color-edge: #7d838d;
+  --color-paper: #e6e4e0;
+  --color-surface: #f4f3f0;
+  --color-ink: #141414;
+  --color-muted: #63615d;
+  --color-line: #cac7c1;
+  --color-edge: #7a7771;
+  --color-dot-off: #c4c1bb;
+  --color-accent: #ff5a1f;
+  --color-on-accent: #141414;
+  --color-accent-text: #b8390a;
   --color-danger: #b3261e;
 
-  --color-verde: #2e9e57;
-  --color-on-verde: #0d0e11;
-  --color-giallo: #e6b530;
-  --color-on-giallo: #0d0e11;
-  --color-rosso: #d2453a;
-  --color-on-rosso: #ffffff;
-  --color-blu: #2f62cc;
-  --color-on-blu: #ffffff;
-
   --radius-control: 6px;
+  --radius-module: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-paper: #0d0e11;
-    --color-surface: #17191d;
-    --color-ink: #ecedef;
-    --color-muted: #9ca2ab;
-    --color-line: #3a3e45;
-    --color-edge: #6e747d;
+    --color-paper: #0f0f10;
+    --color-surface: #1b1b1d;
+    --color-ink: #eeedea;
+    --color-muted: #a09e99;
+    --color-line: #2e2e31;
+    --color-edge: #6f6d69;
+    --color-dot-off: #38383b;
+    --color-accent: #ff6a2b;
+    --color-accent-text: #ff6a2b;
     --color-danger: #ff8a80;
   }
 }
 
-/* Il colore del canale della pagina: lo impostano i contenitori con data-channel. */
 @layer base {
-  [data-channel="spesa"] { --channel: var(--color-verde); --on-channel: var(--color-on-verde); }
-  [data-channel="promemoria"] { --channel: var(--color-giallo); --on-channel: var(--color-on-giallo); }
-  [data-channel="scadenze"] { --channel: var(--color-rosso); --on-channel: var(--color-on-rosso); }
-  [data-channel="casa"] { --channel: var(--color-blu); --on-channel: var(--color-on-blu); }
-
   html {
     color-scheme: light dark;
     -webkit-tap-highlight-color: transparent;
@@ -67,6 +60,7 @@
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
   }
   :focus-visible {
     outline: 2px solid var(--color-ink);
@@ -78,7 +72,36 @@
   }
 }
 
-@utility bg-channel { background-color: var(--channel); }
-@utility text-on-channel { color: var(--on-channel); }
-@utility border-channel { border-color: var(--channel); }
-@utility accent-channel { accent-color: var(--channel); }
+/* Fondo a puntini, come la griglia dell'altoparlante: dietro Roby. */
+@utility bg-dots {
+  background-image: radial-gradient(circle, var(--color-dot-off) 1.2px, transparent 1.6px);
+  background-size: 14px 14px;
+}
+
+/*
+  Effetto CRT solo sugli schermi grandi (TV e desktop), mai sul telefono.
+  Solo gradienti su un velo fisso: niente filtri, il Raspberry deve restare fluido.
+*/
+@utility crt {
+  @media (min-width: 1024px) {
+    &::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      border-radius: 28px;
+      background:
+        repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.07) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.32) 100%);
+      /* Cornice sempre scura, come la scocca intorno al tubo, in qualunque tema. */
+      box-shadow: inset 0 0 0 6px #070708, inset 0 0 80px rgb(0 0 0 / 0.35);
+    }
+  }
+}
+
+/* OSD del canale: resta acceso e poi si spegne di colpo, come sui televisori. */
+@keyframes osd {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}

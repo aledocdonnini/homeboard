@@ -12,7 +12,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function HouseholdPanel({ house, session }: { house: Household; session: Session }) {
   return (
-    <main data-channel="casa" className="mx-auto flex w-full max-w-md flex-col gap-8 px-4 pt-4 pb-32">
+    <main className="mx-auto flex w-full max-w-md flex-col gap-8 px-4 pt-4 pb-32">
       <PageHeader title={house.name} />
 
       <section aria-labelledby="members" className="flex flex-col gap-3">

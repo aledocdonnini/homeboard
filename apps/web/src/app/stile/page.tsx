@@ -4,36 +4,36 @@ import Checkbox from "@/components/ui/Checkbox";
 import EmptyState from "@/components/ui/EmptyState";
 import Field from "@/components/ui/Field";
 import Osd from "@/components/ui/Osd";
+import DotGrid from "@/components/dash/DotGrid";
+import MonthDots from "@/components/dash/MonthDots";
+import TickRuler from "@/components/dash/TickRuler";
 import PageHeader from "@/components/ui/PageHeader";
 import RobyTile from "@/components/ui/RobyTile";
 
 export const metadata: Metadata = { title: "Stile · Homeboard", robots: { index: false } };
 
 // Riferimento visivo dei token e dei componenti, da rivedere in chiaro e in scuro.
-const NEUTRALS = [
-  { name: "paper", note: "sfondo" },
-  { name: "surface", note: "campi e tasti" },
-  { name: "ink", note: "testo, 16:1" },
-  { name: "muted", note: "testo secondario, 5,9:1" },
+const SWATCHES = [
+  { name: "paper", note: "plastica, lo sfondo" },
+  { name: "surface", note: "moduli e campi" },
+  { name: "ink", note: "testo, 14,5:1" },
+  { name: "muted", note: "testo secondario, 4,9:1" },
   { name: "edge", note: "bordi dei controlli, 3,5:1" },
-  { name: "line", note: "divisori" },
-];
-const CHANNELS = [
-  { channel: "spesa", key: "2", name: "Verde", use: "Spesa", ratio: "5,6:1" },
-  { channel: "promemoria", key: "3", name: "Giallo", use: "Promemoria", ratio: "10,1:1" },
-  { channel: "scadenze", key: "4", name: "Rosso", use: "Scadenze", ratio: "4,5:1" },
-  { channel: "casa", key: "", name: "Blu", use: "Casa", ratio: "5,6:1" },
+  { name: "dot-off", note: "pallini spenti" },
+  { name: "accent", note: "l'unico colore: adesso, azione principale" },
+  { name: "accent-text", note: "arancio come testo, 4,6:1" },
 ];
 
 export default function Page() {
   return (
-    <main data-channel="spesa" className="mx-auto flex w-full max-w-2xl flex-col gap-12 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-12 px-4 py-8">
       <PageHeader title="Stile" />
 
-      <section aria-labelledby="neutri" className="flex flex-col gap-4">
-        <h2 id="neutri" className="text-2xl font-semibold">Neutri</h2>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {NEUTRALS.map((c) => (
+      <section aria-labelledby="colori" className="flex flex-col gap-4">
+        <h2 id="colori" className="text-2xl font-semibold">Colori</h2>
+        <p className="max-w-prose text-muted">Grigio da apparecchio, nero e un solo arancio, che segna una cosa per schermata.</p>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {SWATCHES.map((c) => (
             <li key={c.name} className="flex flex-col gap-1">
               <div className="h-14 rounded-control border border-line" style={{ background: `var(--color-${c.name})` }} />
               <span className="font-semibold">{c.name}</span>
@@ -43,35 +43,18 @@ export default function Page() {
         </ul>
       </section>
 
-      <section aria-labelledby="canali" className="flex flex-col gap-4">
-        <h2 id="canali" className="text-2xl font-semibold">Canali</h2>
-        <p className="max-w-prose text-muted">
-          I quattro colori del Televideo. Ogni sezione ha il suo e su una pagina compare solo quello.
-          Il numero è il canale della TV che mostra la stessa cosa.
-        </p>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {CHANNELS.map((c) => (
-            <li key={c.channel} data-channel={c.channel}
-              className="flex min-h-28 flex-col justify-between rounded-control border border-ink bg-channel p-3 text-on-channel">
-              <span className="font-osd text-5xl leading-[0.8]">{c.key || " "}</span>
-              <span className="font-semibold">{c.name}, {c.use}</span>
-              <span className="text-sm">Testo sopra {c.ratio}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       <section aria-labelledby="caratteri" className="flex flex-col gap-4">
         <h2 id="caratteri" className="text-2xl font-semibold">Caratteri</h2>
         <div className="flex flex-col gap-3">
+          <p className="text-8xl leading-[0.82] font-semibold tracking-[-0.05em]">03</p>
           <p className="text-4xl font-bold tracking-tight">Spesa di sabato</p>
           <p className="text-xl font-semibold">Frutta e verdura</p>
           <p className="max-w-prose text-lg">
-            Atkinson Hyperlegible Next per tutto il testo: nata per chi vede poco, distingue bene I, l e 1 anche al sole.
+            Archivo per tutto: i numeri giganti, i titoli e il testo corrente, con cifre a larghezza fissa.
           </p>
           <p className="text-muted">Testo secondario, per note e conteggi.</p>
-          <p className="font-osd text-6xl leading-none">02 03 04</p>
-          <p className="text-sm text-muted">VT323 solo per i numeri in stile OSD, sempre grandi.</p>
+          <p className="font-dots text-6xl font-bold leading-none">00:02:57</p>
+          <p className="text-sm text-muted">Doto, cifre a punti: solo per le letture degli strumenti.</p>
         </div>
       </section>
 
@@ -93,7 +76,11 @@ export default function Page() {
         </div>
         <div className="flex flex-wrap items-end gap-8">
           <Osd value={5} label="da prendere" />
-          <div data-channel="scadenze"><Osd value={12} label="giorni al bollo" /></div>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-3">
+          <div className="flex flex-col gap-2"><span className="text-sm text-muted">Pallini</span><DotGrid filled={5} total={7} cols={7} /></div>
+          <div className="flex flex-col gap-2"><span className="text-sm text-muted">Righello</span><TickRuler daysLeft={3} span={20} /></div>
+          <div className="flex flex-col gap-2"><span className="text-sm text-muted">Mese</span><MonthDots today={new Date(2026, 8, 25)} marked={[28]} /></div>
         </div>
       </section>
 

@@ -21,7 +21,7 @@ export default function CreateHousehold({ onCreated }: { onCreated: () => void }
   }
 
   return (
-    <main data-channel="casa" className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-4 py-10">
       <div className="flex flex-col gap-4">
         <RobyTile expression="excited" />
         <h1 className="text-4xl font-bold tracking-tight">Crea la tua casa</h1>
