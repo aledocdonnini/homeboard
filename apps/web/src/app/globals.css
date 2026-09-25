@@ -51,7 +51,8 @@
 }
 
 /*
-  Overscan: margine di sicurezza per la cornice fisica della TV, che copre i bordi del pannello.
+  Overscan: margine vuoto per la cornice fisica della TV, che copre i bordi del pannello.
+  Il margine ha il colore dello schermo: la cornice vera è quella della Crezar.
   Taratura: si regola dall'URL del kiosk (?overscan=6, in % del lato corto) senza toccare il codice.
 */
 :root {
@@ -87,7 +88,7 @@
 
 /*
   Effetto CRT solo sugli schermi grandi (TV e desktop), mai sul telefono.
-  - ::after, fisso: scanline, vignettatura, cornice curva e riflesso del vetro.
+  - ::after, fisso: scanline, vignettatura e riflesso del vetro, su tutto il pannello.
   - ::before, fisso: la banda di scansione che scende, e un leggero tremolio.
   - Sul testo: bagliore dei fosfori e frange rosso/azzurro (convergenza imperfetta).
   Solo gradienti, ombre del testo, opacity e transform: niente filter, il Raspberry deve restare fluido.
@@ -102,26 +103,21 @@
     &::after {
       content: "";
       position: fixed;
-      inset: var(--overscan);
+      inset: 0;
       z-index: 40;
       pointer-events: none;
-      border-radius: 56px / 48px;
       background:
         linear-gradient(125deg, rgb(255 255 255 / 0.07) 0%, transparent 28%),
         repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px),
         radial-gradient(ellipse 80% 75% at 50% 50%, transparent 45%, rgb(0 0 0 / 0.55) 100%);
-      /* Cornice sempre scura, come la scocca intorno al tubo, in qualunque tema. */
-      box-shadow:
-        0 0 0 100vmax #070708, /* tutto fuori dallo schermo è scocca */
-        inset 0 0 0 10px #070708,
-        inset 0 0 120px 20px rgb(0 0 0 / 0.55);
+      box-shadow: inset 0 0 120px 20px rgb(0 0 0 / 0.5);
     }
 
     &::before {
       content: "";
       position: fixed;
-      inset: var(--overscan);
-      z-index: 39; /* sotto la cornice: la banda non passa sopra la scocca */
+      inset: 0;
+      z-index: 41;
       pointer-events: none;
       height: 18vh;
       background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.05) 50%, transparent);
