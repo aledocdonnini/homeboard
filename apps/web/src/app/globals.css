@@ -50,6 +50,14 @@
   }
 }
 
+/*
+  Overscan: margine di sicurezza per la cornice fisica della TV, che copre i bordi del pannello.
+  Taratura: si regola dall'URL del kiosk (?overscan=6, in % del lato corto) senza toccare il codice.
+*/
+:root {
+  --overscan: 4vmin;
+}
+
 @layer base {
   html {
     color-scheme: light dark;
@@ -94,7 +102,7 @@
     &::after {
       content: "";
       position: fixed;
-      inset: 0;
+      inset: var(--overscan);
       z-index: 40;
       pointer-events: none;
       border-radius: 56px / 48px;
@@ -104,7 +112,7 @@
         radial-gradient(ellipse 80% 75% at 50% 50%, transparent 45%, rgb(0 0 0 / 0.55) 100%);
       /* Cornice sempre scura, come la scocca intorno al tubo, in qualunque tema. */
       box-shadow:
-        0 0 0 40px #070708,
+        0 0 0 100vmax #070708, /* tutto fuori dallo schermo è scocca */
         inset 0 0 0 10px #070708,
         inset 0 0 120px 20px rgb(0 0 0 / 0.55);
     }
@@ -112,8 +120,8 @@
     &::before {
       content: "";
       position: fixed;
-      inset: 0;
-      z-index: 41;
+      inset: var(--overscan);
+      z-index: 39; /* sotto la cornice: la banda non passa sopra la scocca */
       pointer-events: none;
       height: 18vh;
       background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.05) 50%, transparent);

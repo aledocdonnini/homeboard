@@ -25,6 +25,9 @@ export default function Cruscotto() {
   const [today] = useState(() => new Date()); // solo client: vedi app/cruscotto/page.tsx
 
   useEffect(() => {
+    // Taratura dell'overscan dal kiosk: /tv?overscan=6 (in % del lato corto, 0-20).
+    const overscan = Number(new URLSearchParams(location.search).get("overscan") ?? NaN);
+    if (overscan >= 0 && overscan <= 20) document.documentElement.style.setProperty("--overscan", `${overscan}vmin`);
     // I sei tasti del televisore arrivano come tasti 1-6 (overlay gpio-key sul Raspberry).
     const onKey = (e: KeyboardEvent) => {
       const n = Number(e.key);
@@ -49,7 +52,7 @@ export default function Cruscotto() {
   return (
     <div className="crt min-h-[100dvh]">
       {/* ——— Schermi grandi: TV 1920×1280, desktop ——— */}
-      <main className="hidden h-[100dvh] grid-cols-12 gap-10 p-10 lg:grid">
+      <main className="hidden h-[100dvh] grid-cols-12 gap-10 p-[calc(2.5rem+var(--overscan))] lg:grid">
         {channel === 1 && (
           <>
             <div className="col-span-3 flex flex-col justify-between">
@@ -142,7 +145,7 @@ export default function Cruscotto() {
 
         {/* OSD del canale nell'angolo: compare al cambio e sparisce. */}
         <p key={osdKey} aria-live="polite"
-          className="fixed top-8 right-10 z-50 [font-stretch:75%] font-semibold text-7xl text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
+          className="fixed top-[calc(2rem+var(--overscan))] right-[calc(2.5rem+var(--overscan))] z-50 [font-stretch:75%] font-semibold text-7xl text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
           <span className="sr-only">Canale </span>{channel}<span className="sr-only">, {CHANNELS[channel]}</span>
         </p>
       </main>
