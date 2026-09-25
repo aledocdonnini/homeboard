@@ -7,3 +7,4 @@ node_modules/
 .history/
 supabase/.temp/
 supabase/.branches/
+design/
