@@ -57,10 +57,10 @@ export default function Deadlines({ householdId, tz }: { householdId: string; tz
         <ul>
           {todo.map(({ deadline: d, daysLeft }) => (
             <li key={d.id} className="flex items-start gap-4 border-b border-line py-4 last:border-b-0">
-              <span aria-hidden className={`min-w-[2.2ch] shrink-0 text-6xl leading-[0.82] font-semibold tracking-[-0.05em] ${daysLeft <= 7 ? "text-accent-text" : ""}`}>
+              <span aria-hidden className={`min-w-[2.2ch] shrink-0 leading-[0.82] font-semibold tracking-[-0.05em] ${Math.abs(daysLeft) > 99 ? "text-4xl" : "text-6xl"} ${daysLeft <= 7 ? "text-accent-text" : ""}`}>
                 {two(daysLeft)}
               </span>
-              <button type="button" onClick={() => setEditing(d)} className="flex min-w-0 flex-1 flex-col text-left">
+              <button type="button" onClick={() => setEditing(d)} className="flex min-w-0 flex-1 flex-col text-left hyphens-auto">
                 <span className="text-xl font-medium">{d.title}</span>
                 <span className="text-muted">
                   {whenLabel(daysLeft)}, {shortDate(d.due_date, today)}
