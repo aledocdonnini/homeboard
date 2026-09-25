@@ -8,6 +8,7 @@ import Big from "@/components/dash/Big";
 import PageHeader from "@/components/ui/PageHeader";
 import type { Household } from "./HouseholdGate";
 import InviteButton from "./InviteButton";
+import PushSettings from "./PushSettings";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -36,6 +37,8 @@ export default function HouseholdPanel({ house, session }: { house: Household; s
         </ul>
         <InviteButton householdId={house.id} householdName={house.name} />
       </section>
+
+      <PushSettings />
 
       <section aria-labelledby="account" className="flex flex-col gap-3 border-t-4 border-ink pt-5">
         <h2 id="account" className="text-xl font-semibold">Il tuo account</h2>

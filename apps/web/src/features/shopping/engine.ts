@@ -51,10 +51,16 @@ async function send(op: Op): Promise<SendResult> {
   }
 }
 
+// Il server dimentica le righe tolte dopo 30 giorni (job notturno): chi non si sincronizza da più di 25
+// rifà un download completo, altrimenti non saprebbe di quelle cancellazioni.
+const FULL_AFTER_MS = 25 * 86_400_000;
+
 async function pull(hid: string) {
-  const since = (await db.meta.get(pullKey(hid)))?.value;
+  const pulledAt = (await db.meta.get(`pulledAt:${hid}`))?.value;
+  const full = !pulledAt || Date.now() - Date.parse(pulledAt) > FULL_AFTER_MS;
+  const since = full ? undefined : (await db.meta.get(pullKey(hid)))?.value;
   let query = supabase.from("shopping_items").select(COLUMNS).eq("household_id", hid);
-  // Prima volta: solo le righe vive. Poi tutto ciò che è cambiato, cancellazioni comprese.
+  // Download completo: solo le righe vive. Altrimenti tutto ciò che è cambiato, cancellazioni comprese.
   query = since ? query.gte("updated_at", since) : query.is("deleted_at", null);
   const [items, stats] = await Promise.all([
     query,
@@ -63,11 +69,19 @@ async function pull(hid: string) {
   ]);
   if (items.error || stats.error) return; // offline o server giù: riproverà al prossimo giro
   await receive(hid, items.data);
+  if (full) {
+    // Via le righe locali che il server non ha più (salvo quelle con modifiche ancora in coda).
+    const live = new Set(items.data.map((r) => r.id));
+    const queued = new Set((await queueOf(hid)).map((e) => e.op.itemId));
+    const gone = (await db.items.where("household_id").equals(hid).primaryKeys()).filter((id) => !live.has(id) && !queued.has(id));
+    await db.items.bulkDelete(gone);
+  }
   const latest = items.data.reduce<string | undefined>((max, r) => (!max || Date.parse(r.updated_at) > Date.parse(max) ? r.updated_at : max), since);
   await db.transaction("rw", db.stats, db.meta, async () => {
     await db.stats.where("household_id").equals(hid).delete();
     await db.stats.bulkPut(stats.data.map((s) => ({ ...s, household_id: hid })));
     await db.meta.put({ key: pullKey(hid), value: latest ?? new Date(0).toISOString() });
+    await db.meta.put({ key: `pulledAt:${hid}`, value: new Date().toISOString() });
   });
 }
 

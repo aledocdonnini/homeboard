@@ -26,7 +26,7 @@ export default function InviteButton({ householdId, householdName }: { household
 
   return (
     <div className="flex flex-col gap-3 pt-2">
-      <Button onClick={invite} className="self-start">
+      <Button variant="quiet" onClick={invite} className="self-start">
         <UserPlus aria-hidden weight="bold" className="size-5" /> Invita qualcuno
       </Button>
       {link && (

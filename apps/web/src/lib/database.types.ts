@@ -125,6 +125,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notification_log": {
+                  Row: {
+                    "item_id": string,"key": string,"kind": string,"sent_at": string
+                  }
+                  Insert: {
+                    "item_id": string,"key": string,"kind": string,"sent_at"?: string
+                  }
+                  Update: {
+                    "item_id"?: string,"key"?: string,"kind"?: string,"sent_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"last_ok_at": string | null,"p256dh": string,"user_agent": string | null,"user_id": string
+                  }
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"last_ok_at"?: string | null,"p256dh": string,"user_agent"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"last_ok_at"?: string | null,"p256dh"?: string,"user_agent"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"reminders": {
                   Row: {
                     "at_time": string,"created_at": string,"created_by": string | null,"deleted_at": string | null,"household_id": string,"id": string,"next_at": string | null,"note": string | null,"recurrence": Json | null,"start_date": string,"title": string,"updated_at": string,"updated_by": string | null
@@ -191,6 +217,9 @@ isOneToOne: false
             "accept_invite":
 { Args: { "invite": string }; Returns: string
                            },
+"call_notify":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "can_read":
 { Args: { "hid": string }; Returns: boolean
                            },
@@ -206,6 +235,9 @@ isOneToOne: false
 "default_display_name":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"delete_push_subscription":
+{ Args: { "endpoint": string }; Returns: undefined
+                           },
 "device_heartbeat":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -217,6 +249,9 @@ isOneToOne: false
                            },
 "is_real_user":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"save_push_subscription":
+{ Args: { "auth": string,"endpoint": string,"p256dh": string,"user_agent"?: string }; Returns: undefined
                            },
 "start_pairing":
 { Args: Record<PropertyKey, never>; Returns: string
