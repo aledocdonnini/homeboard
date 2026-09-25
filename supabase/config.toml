@@ -242,6 +242,15 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Stesso contenuto: al primo accesso Supabase manda "confirmation", poi "magic_link".
+[auth.email.template.magic_link]
+subject = "Il tuo codice per Homeboard"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Il tuo codice per Homeboard"
+content_path = "./supabase/templates/confirmation.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
