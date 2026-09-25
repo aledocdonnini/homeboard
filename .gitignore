@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+.env*
+!.env.example
+.vercel
+*.tsbuildinfo
+.history/
+supabase/.temp/
+supabase/.branches/
