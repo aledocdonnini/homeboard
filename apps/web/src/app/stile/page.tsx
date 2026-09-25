@@ -53,8 +53,8 @@ export default function Page() {
             Archivo per tutto: i numeri giganti, i titoli e il testo corrente, con cifre a larghezza fissa.
           </p>
           <p className="text-muted">Testo secondario, per note e conteggi.</p>
-          <p className="font-dots text-6xl font-bold leading-none">00:02:57</p>
-          <p className="text-sm text-muted">Doto, cifre a punti: solo per le letture degli strumenti.</p>
+          <p className="[font-stretch:75%] font-semibold text-6xl leading-none">00:02:57</p>
+          <p className="text-sm text-muted">Archivo stretto per le letture da display: OSD, secondi, tasti.</p>
         </div>
       </section>
 

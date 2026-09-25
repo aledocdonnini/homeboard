@@ -142,7 +142,7 @@ export default function Cruscotto() {
 
         {/* OSD del canale nell'angolo: compare al cambio e sparisce. */}
         <p key={osdKey} aria-live="polite"
-          className="fixed top-8 right-10 z-50 font-dots text-6xl font-bold text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
+          className="fixed top-8 right-10 z-50 [font-stretch:75%] font-semibold text-7xl text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
           <span className="sr-only">Canale </span>{channel}<span className="sr-only">, {CHANNELS[channel]}</span>
         </p>
       </main>

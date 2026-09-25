@@ -27,7 +27,7 @@ export default function TabBar() {
               className="flex min-h-14 flex-col items-center justify-center rounded-control border border-b-4 border-edge bg-surface
                 active:translate-y-px aria-[current=page]:border-ink aria-[current=page]:bg-ink aria-[current=page]:text-paper"
             >
-              {t.key ? <span aria-hidden className="font-dots text-2xl font-bold leading-none">{t.key}</span> : <House aria-hidden weight="bold" className="size-5" />}
+              {t.key ? <span aria-hidden className="[font-stretch:75%] font-semibold text-2xl leading-none">{t.key}</span> : <House aria-hidden weight="bold" className="size-5" />}
               <span className="text-xs font-semibold">{t.label}</span>
             </Link>
           </li>

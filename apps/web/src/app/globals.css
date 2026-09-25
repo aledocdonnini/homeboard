@@ -9,7 +9,7 @@
     Come campitura porta testo ink sopra; come testo sul grigio chiaro si usa accent-text (più scuro).
   - Niente card con ombre: moduli piatti su surface, blocchi separati da linee piene.
   - Arrotondamento: 6px i controlli, 14px i moduli, 22% il palco di Roby.
-  - Quattro strumenti, sempre quelli: pallini, righello a tacche, barre, cifre a punti.
+  - Tre strumenti, sempre quelli: pallini, righello a tacche, barre. Un solo carattere, Archivo.
 
   Contrasti misurati (WCAG), chiaro / scuro:
     ink su paper 14,5 / 16,4 · muted 4,9 / 7,2 · edge 3,5 / 3,7 (bordi dei controlli)
@@ -18,7 +18,6 @@
 
 @theme {
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-dots: var(--font-doto), ui-monospace, monospace;
 
   --color-paper: #e6e4e0;
   --color-surface: #f4f3f0;
@@ -80,24 +79,60 @@
 
 /*
   Effetto CRT solo sugli schermi grandi (TV e desktop), mai sul telefono.
-  Solo gradienti su un velo fisso: niente filtri, il Raspberry deve restare fluido.
+  - ::after, fisso: scanline, vignettatura, cornice curva e riflesso del vetro.
+  - ::before, fisso: la banda di scansione che scende, e un leggero tremolio.
+  - Sul testo: bagliore dei fosfori e frange rosso/azzurro (convergenza imperfetta).
+  Solo gradienti, ombre del testo, opacity e transform: niente filter, il Raspberry deve restare fluido.
 */
 @utility crt {
   @media (min-width: 1024px) {
+    text-shadow:
+      0 0 0.5rem color-mix(in srgb, currentColor 30%, transparent),
+      1.5px 0 0 rgb(255 40 40 / 0.28),
+      -1.5px 0 0 rgb(40 170 255 / 0.28);
+
     &::after {
       content: "";
       position: fixed;
       inset: 0;
       z-index: 40;
       pointer-events: none;
-      border-radius: 28px;
+      border-radius: 56px / 48px;
       background:
-        repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.07) 0 1px, transparent 1px 3px),
-        radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.32) 100%);
+        linear-gradient(125deg, rgb(255 255 255 / 0.07) 0%, transparent 28%),
+        repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse 80% 75% at 50% 50%, transparent 45%, rgb(0 0 0 / 0.55) 100%);
       /* Cornice sempre scura, come la scocca intorno al tubo, in qualunque tema. */
-      box-shadow: inset 0 0 0 6px #070708, inset 0 0 80px rgb(0 0 0 / 0.35);
+      box-shadow:
+        0 0 0 40px #070708,
+        inset 0 0 0 10px #070708,
+        inset 0 0 120px 20px rgb(0 0 0 / 0.55);
+    }
+
+    &::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 41;
+      pointer-events: none;
+      height: 18vh;
+      background: linear-gradient(to bottom, transparent, rgb(255 255 255 / 0.05) 50%, transparent);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      &::before { animation: crt-roll 7s linear infinite; }
+      &::after { animation: crt-flicker 0.15s steps(2) infinite; }
     }
   }
+}
+
+@keyframes crt-roll {
+  from { transform: translateY(-20vh); }
+  to { transform: translateY(100vh); }
+}
+@keyframes crt-flicker {
+  0% { opacity: 1; }
+  100% { opacity: 0.94; }
 }
 
 /* OSD del canale: resta acceso e poi si spegne di colpo, come sui televisori. */

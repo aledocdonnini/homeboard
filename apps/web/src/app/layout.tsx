@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Doto } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 import TabBar from "@/components/TabBar";
 
 // Archivo: grotesk con asse di larghezza, regge i numeri giganti e il testo corrente.
+// Stretto (font-stretch 75%) fa da carattere di display: OSD, secondi, tasti.
 const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], axes: ["wdth"] });
-// Doto: cifre a matrice di punti, solo per le letture degli strumenti.
-const doto = Doto({ variable: "--font-doto", subsets: ["latin"] });
 
 export const viewport: Viewport = {
   viewportFit: "cover",
@@ -25,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="it"
-      className={`${archivo.variable} ${doto.variable} h-full antialiased`}
+      className={`${archivo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}
