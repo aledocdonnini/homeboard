@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import type { Household } from "./HouseholdGate";
 import InviteButton from "./InviteButton";
 import PushSettings from "./PushSettings";
+import Devices from "./Devices";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -37,6 +38,8 @@ export default function HouseholdPanel({ house, session }: { house: Household; s
         </ul>
         <InviteButton householdId={house.id} householdName={house.name} />
       </section>
+
+      <Devices house={house} />
 
       <PushSettings />
 

@@ -1,9 +1,9 @@
 "use client";
 
-import Cruscotto from "./Cruscotto";
 import { sample } from "./sample";
+import TvScreen from "./TvScreen";
 
-// /cruscotto: la vista TV con dati d'esempio, per provarla senza casa né Raspberry.
+// /cruscotto: la TV con dati d'esempio, per provarla senza casa né Raspberry (tasti 1-6).
 export default function CruscottoDemo() {
-  return <Cruscotto data={sample} tv />;
+  return <TvScreen data={sample} tz="Europe/Rome" />;
 }

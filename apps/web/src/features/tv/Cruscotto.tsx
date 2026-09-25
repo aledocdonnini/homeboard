@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import Big from "@/components/dash/Big";
 import Clock from "@/components/dash/Clock";
@@ -16,9 +16,8 @@ export type DashDeadline = { title: string; due: Date; daysLeft: number };
 export type DashReminder = { time: string; title: string; note?: string };
 export type DashData = { deadlines: DashDeadline[]; reminders: DashReminder[]; shopping: { todo: string[]; inCart: string[] } };
 
-// Canali della TV: 1 cruscotto, 2-4 un dettaglio a schermo intero. 5 (monoscopio) e 6 (Roby) arrivano con la fase 7.
-const CHANNELS = { 1: "In onda ora", 2: "Spesa", 3: "Promemoria", 4: "Scadenze" } as const;
-type Channel = keyof typeof CHANNELS;
+/** Canali del cruscotto: 1 la panoramica, 2-4 un dettaglio a schermo intero (5 e 6 li gestisce TvScreen). */
+export type DashChannel = 1 | 2 | 3 | 4;
 
 const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString("it-IT", o);
 // I giorni possono essere negativi (scadenza passata): numero in positivo e "di ritardo" nell'etichetta.
@@ -27,34 +26,16 @@ const two = (n: number) => String(Math.abs(n)).padStart(2, "0");
 const when = (n: number) => (n < 0 ? `scaduta da ${-n} ${n === -1 ? "giorno" : "giorni"}` : n === 0 ? "scade oggi" : `scade tra ${n} ${n === 1 ? "giorno" : "giorni"}`);
 
 /**
- * Il cruscotto. `tv`: la vista del televisore (tasti 1-4 per i canali, OSD, tutto lo schermo).
+ * Il cruscotto. `tv`: la vista del televisore (tutto lo schermo, niente link; il canale lo sceglie TvScreen).
  * Senza `tv` è la home della PWA: stesso cruscotto, con la barra in basso e i moduli che portano alle sezioni.
  */
-export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: boolean }) {
-  const [channel, setChannel] = useState<Channel>(1);
-  const [osdKey, setOsdKey] = useState(0); // cambia a ogni cambio canale: riparte l'animazione dell'OSD
+export default function Cruscotto({ data, tv = false, channel = 1, surprised = false }:
+  { data: DashData; tv?: boolean; channel?: DashChannel; surprised?: boolean }) {
   const [today] = useState(() => new Date()); // solo client: le pagine lo montano senza SSR
-
-  useEffect(() => {
-    if (!tv) return;
-    // Taratura dell'overscan dal kiosk: /tv?overscan=6 (in % del lato corto, 0-20).
-    const overscan = Number(new URLSearchParams(location.search).get("overscan") ?? NaN);
-    if (overscan >= 0 && overscan <= 20) document.documentElement.style.setProperty("--overscan", `${overscan}vmin`);
-    // I sei tasti del televisore arrivano come tasti 1-6 (overlay gpio-key sul Raspberry).
-    const onKey = (e: KeyboardEvent) => {
-      const n = Number(e.key);
-      if (n in CHANNELS) {
-        setChannel(n as Channel);
-        setOsdKey((k) => k + 1);
-      }
-    };
-    addEventListener("keydown", onKey);
-    return () => removeEventListener("keydown", onKey);
-  }, [tv]);
 
   const [next, ...later] = data.deadlines;
   const { todo, inCart } = data.shopping;
-  const mood = { night: false, justAdded: false, daysLeft: data.deadlines.map((d) => d.daysLeft), shoppingCount: todo.length };
+  const mood = { night: false, justAdded: surprised, daysLeft: data.deadlines.map((d) => d.daysLeft), shoppingCount: todo.length };
   const says = next && next.daysLeft <= 7
     ? `${next.title}: ${when(next.daysLeft)}.`
     : todo.length ? `${todo.length === 1 ? "C'è 1 cosa" : `Ci sono ${todo.length} cose`} da prendere.` : "La lista della spesa è vuota.";
@@ -65,7 +46,7 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
   const to = (href: string, node: ReactNode) => (tv ? node : <Link href={href} className="block rounded-module active:translate-y-px">{node}</Link>);
 
   return (
-    <div className="crt min-h-[100dvh]">
+    <div className={`${tv ? "" : "crt "}min-h-[100dvh]`}>
       {/* ——— Schermi grandi: TV 1920×1280, desktop ——— */}
       <main className={`hidden grid-cols-12 gap-10 p-[calc(2.5rem+var(--overscan))] lg:grid ${tv ? "h-[100dvh]" : "h-[calc(100dvh-5.5rem)]"}`}>
         {shown === 1 && (
@@ -107,7 +88,7 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
                 <section aria-label="Spesa" className="mt-auto flex items-center gap-8 border-t border-line pt-6">
                   <Big className="text-7xl">{two(todo.length)}</Big>
                   <p className="text-2xl text-muted">da prendere</p>
-                  <DotGrid filled={todo.length} total={todo.length + inCart.length} cols={Math.max(todo.length + inCart.length, 1)} className="ml-auto w-64" />
+                  <DotGrid filled={todo.length} total={todo.length + inCart.length} cols={10} className="ml-auto w-64" />
                 </section>
               )}
             </div>
@@ -173,13 +154,6 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
           </>
         )}
 
-        {tv && (
-          // OSD del canale nell'angolo: compare al cambio e sparisce.
-          <p key={osdKey} aria-live="polite"
-            className="fixed top-[calc(2rem+var(--overscan))] right-[calc(2.5rem+var(--overscan))] z-50 [font-stretch:75%] font-semibold text-7xl text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
-            <span className="sr-only">Canale </span>{channel}<span className="sr-only">, {CHANNELS[channel]}</span>
-          </p>
-        )}
       </main>
 
       {/* ——— Telefono e schermi medi: gli stessi moduli, in colonna per rilevanza ——— */}

@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useSession } from "@/features/auth/useSession";
 import CreateHousehold from "./CreateHousehold";
 
-const query = () => supabase.from("households").select("id, name, timezone, household_members(user_id, role, display_name)").order("created_at");
+const query = () => supabase.from("households").select("id, name, timezone, household_members(user_id, role, display_name), devices(id, name, last_seen_at)").order("created_at");
 export type Household = NonNullable<Awaited<ReturnType<typeof query>>["data"]>[number];
 // La copia salvata da una versione precedente può non avere il fuso: la casa di default è in Italia.
 export const timezoneOf = (h: Household) => h.timezone ?? "Europe/Rome";

@@ -48,10 +48,12 @@ export class RobyFaceElement extends HTMLElement {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `<style>${STYLE}</style><div class="stage" part="stage"></div>`;
     this.#stage = root.querySelector(".stage")!;
-    this.setAttribute("role", "img");
+    // Niente attributi qui: un custom element creato con createElement non può averne nel costruttore
+    // (il browser lo scarta e l'elemento resta vuoto). Si impostano quando entra nella pagina.
   }
 
   connectedCallback() {
+    if (!this.hasAttribute("role")) this.setAttribute("role", "img");
     if (this.#face) return;
     this.#face = createRobotFace(this.#stage, { radius: 0 });
     const svg = this.#stage.querySelector("svg")!;
