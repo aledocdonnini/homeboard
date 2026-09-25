@@ -21,8 +21,10 @@ const CHANNELS = { 1: "In onda ora", 2: "Spesa", 3: "Promemoria", 4: "Scadenze" 
 type Channel = keyof typeof CHANNELS;
 
 const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString("it-IT", o);
-const giorni = (n: number) => (n === 1 ? "giorno" : "giorni");
-const two = (n: number) => String(n).padStart(2, "0");
+// I giorni possono essere negativi (scadenza passata): numero in positivo e "di ritardo" nell'etichetta.
+const giorni = (n: number) => (n < 0 ? (n === -1 ? "giorno di ritardo" : "giorni di ritardo") : n === 1 ? "giorno" : "giorni");
+const two = (n: number) => String(Math.abs(n)).padStart(2, "0");
+const when = (n: number) => (n < 0 ? `scaduta da ${-n} ${n === -1 ? "giorno" : "giorni"}` : n === 0 ? "scade oggi" : `scade tra ${n} ${n === 1 ? "giorno" : "giorni"}`);
 
 /**
  * Il cruscotto. `tv`: la vista del televisore (tasti 1-4 per i canali, OSD, tutto lo schermo).
@@ -54,7 +56,7 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
   const { todo, inCart } = data.shopping;
   const mood = { night: false, justAdded: false, daysLeft: data.deadlines.map((d) => d.daysLeft), shoppingCount: todo.length };
   const says = next && next.daysLeft <= 7
-    ? `${next.title}: scade tra ${next.daysLeft} ${giorni(next.daysLeft)}.`
+    ? `${next.title}: ${when(next.daysLeft)}.`
     : todo.length ? `${todo.length === 1 ? "C'è 1 cosa" : `Ci sono ${todo.length} cose`} da prendere.` : "La lista della spesa è vuota.";
   const marked = data.deadlines.filter((d) => d.due.getMonth() === today.getMonth()).map((d) => d.due.getDate());
   const soon = data.deadlines.filter((d) => d.daysLeft <= 30).length;
@@ -82,7 +84,7 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
                     <div className="flex flex-col gap-1 pb-3">
                       <p className="text-3xl text-muted">{giorni(next.daysLeft)}</p>
                       <h2 className="text-5xl font-semibold tracking-tight">{next.title}</h2>
-                      <p className="text-2xl text-muted">scade {fmt(next.due, { weekday: "long", day: "numeric", month: "long" })}</p>
+                      <p className="text-2xl text-muted">{next.daysLeft < 0 ? "scaduta" : "scade"} {fmt(next.due, { weekday: "long", day: "numeric", month: "long" })}</p>
                     </div>
                   </div>
                   <TickRuler daysLeft={next.daysLeft} />
@@ -163,7 +165,7 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
                   <Big className={`w-[2.2ch] text-[9rem] ${i === 0 ? "text-accent-text" : ""}`}>{two(d.daysLeft)}</Big>
                   <div className="flex flex-col gap-1 pt-4">
                     <h2 className="text-5xl font-semibold tracking-tight">{d.title}</h2>
-                    <p className="text-2xl text-muted">{giorni(d.daysLeft)}, scade {fmt(d.due, { weekday: "long", day: "numeric", month: "long" })}</p>
+                    <p className="text-2xl text-muted">{giorni(d.daysLeft)}, {d.daysLeft < 0 ? "scaduta" : "scade"} {fmt(d.due, { weekday: "long", day: "numeric", month: "long" })}</p>
                   </div>
                 </div>
               ))}
@@ -231,7 +233,7 @@ export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: b
           <Module label="Poi">
             {later.map((d) => (
               <p key={d.title} className="flex items-baseline justify-between gap-4 text-lg">
-                {d.title}<span className="font-semibold">{d.daysLeft} {giorni(d.daysLeft)}</span>
+                {d.title}<span className="font-semibold">{Math.abs(d.daysLeft)} {giorni(d.daysLeft)}</span>
               </p>
             ))}
           </Module>

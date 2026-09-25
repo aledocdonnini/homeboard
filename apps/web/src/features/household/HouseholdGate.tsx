@@ -7,8 +7,10 @@ import { supabase } from "@/lib/supabase";
 import { useSession } from "@/features/auth/useSession";
 import CreateHousehold from "./CreateHousehold";
 
-const query = () => supabase.from("households").select("id, name, household_members(user_id, role, display_name)").order("created_at");
+const query = () => supabase.from("households").select("id, name, timezone, household_members(user_id, role, display_name)").order("created_at");
 export type Household = NonNullable<Awaited<ReturnType<typeof query>>["data"]>[number];
+// La copia salvata da una versione precedente può non avere il fuso: la casa di default è in Italia.
+export const timezoneOf = (h: Household) => h.timezone ?? "Europe/Rome";
 
 /** Mostra i figli solo con un membro connesso e una casa; altrimenti manda al login o alla creazione della casa. */
 export default function HouseholdGate({ children }: { children: (house: Household, session: Session) => ReactNode }) {

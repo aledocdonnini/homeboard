@@ -37,7 +37,7 @@ export const LOCAL_TIME = "1970-01-01T00:00:00Z";
  * La copia locale è più recente della riga arrivata? (Arrivi fuori ordine: una fetch lenta dopo il realtime.)
  * Date.parse e non confronto fra stringhe: REST e Realtime non formattano i timestamp allo stesso modo.
  */
-export const isNewer = (local: Item | undefined, incoming: Item) =>
+export const isNewer = (local: { updated_at: string } | undefined, incoming: { updated_at: string }) =>
   !!local && Date.parse(local.updated_at) > Date.parse(incoming.updated_at);
 
 /** Applica un'operazione a una riga locale (o la crea, se è un inserimento). */

@@ -25,6 +25,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@shared/*": [
+        "../../supabase/functions/_shared/*"
       ]
     },
     "noUncheckedIndexedAccess": true,

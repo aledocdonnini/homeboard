@@ -23,7 +23,26 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "device_pairings": {
+            "deadlines": {
+                  Row: {
+                    "category": string,"created_at": string,"created_by": string | null,"deleted_at": string | null,"done_at": string | null,"due_date": string,"household_id": string,"id": string,"note": string | null,"notify_days": (number)[],"recurrence": Json | null,"start_date": string,"title": string,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "category"?: string,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"done_at"?: string | null,"due_date": string,"household_id": string,"id"?: string,"note"?: string | null,"notify_days"?: (number)[],"recurrence"?: Json | null,"start_date": string,"title": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "category"?: string,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"done_at"?: string | null,"due_date"?: string,"household_id"?: string,"id"?: string,"note"?: string | null,"notify_days"?: (number)[],"recurrence"?: Json | null,"start_date"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "deadlines_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"device_pairings": {
                   Row: {
                     "code": string,"expires_at": string,"user_id": string
                   }
@@ -106,6 +125,25 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"reminders": {
+                  Row: {
+                    "at_time": string,"created_at": string,"created_by": string | null,"deleted_at": string | null,"household_id": string,"id": string,"next_at": string | null,"note": string | null,"recurrence": Json | null,"start_date": string,"title": string,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "at_time": string,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"household_id": string,"id"?: string,"next_at"?: string | null,"note"?: string | null,"recurrence"?: Json | null,"start_date": string,"title": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "at_time"?: string,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"household_id"?: string,"id"?: string,"next_at"?: string | null,"note"?: string | null,"recurrence"?: Json | null,"start_date"?: string,"title"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reminders_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"shopping_item_stats": {
                   Row: {
                     "category": string,"household_id": string,"last_used": string,"name": string,"name_norm": string,"uses": number
@@ -159,6 +197,9 @@ isOneToOne: false
 "claim_pairing":
 { Args: { "code": string,"household": string,"name"?: string }; Returns: string
                            },
+"complete_deadline":
+{ Args: { "deadline": string,"next_due"?: string }; Returns: string
+                           },
 "create_household":
 { Args: { "name": string }; Returns: string
                            },
@@ -179,6 +220,9 @@ isOneToOne: false
                            },
 "start_pairing":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"valid_recurrence":
+{ Args: { "freqs": (string)[],"r": Json }; Returns: boolean
                            }
           }
           Enums: {
