@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
+import Big from "@/components/dash/Big";
 import Clock from "@/components/dash/Clock";
 import DotGrid from "@/components/dash/DotGrid";
 import Module from "@/components/dash/Module";
@@ -9,7 +11,10 @@ import RobyPanel from "@/components/dash/RobyPanel";
 import TickRuler from "@/components/dash/TickRuler";
 import RobyTile from "@/components/ui/RobyTile";
 import { expressionFor } from "./expression";
-import { sample } from "./sample";
+
+export type DashDeadline = { title: string; due: Date; daysLeft: number };
+export type DashReminder = { time: string; title: string; note?: string };
+export type DashData = { deadlines: DashDeadline[]; reminders: DashReminder[]; shopping: { todo: string[]; inCart: string[] } };
 
 // Canali della TV: 1 cruscotto, 2-4 un dettaglio a schermo intero. 5 (monoscopio) e 6 (Roby) arrivano con la fase 7.
 const CHANNELS = { 1: "In onda ora", 2: "Spesa", 3: "Promemoria", 4: "Scadenze" } as const;
@@ -19,12 +24,17 @@ const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString("it
 const giorni = (n: number) => (n === 1 ? "giorno" : "giorni");
 const two = (n: number) => String(n).padStart(2, "0");
 
-export default function Cruscotto() {
+/**
+ * Il cruscotto. `tv`: la vista del televisore (tasti 1-4 per i canali, OSD, tutto lo schermo).
+ * Senza `tv` è la home della PWA: stesso cruscotto, con la barra in basso e i moduli che portano alle sezioni.
+ */
+export default function Cruscotto({ data, tv = false }: { data: DashData; tv?: boolean }) {
   const [channel, setChannel] = useState<Channel>(1);
   const [osdKey, setOsdKey] = useState(0); // cambia a ogni cambio canale: riparte l'animazione dell'OSD
-  const [today] = useState(() => new Date()); // solo client: vedi app/cruscotto/page.tsx
+  const [today] = useState(() => new Date()); // solo client: le pagine lo montano senza SSR
 
   useEffect(() => {
+    if (!tv) return;
     // Taratura dell'overscan dal kiosk: /tv?overscan=6 (in % del lato corto, 0-20).
     const overscan = Number(new URLSearchParams(location.search).get("overscan") ?? NaN);
     if (overscan >= 0 && overscan <= 20) document.documentElement.style.setProperty("--overscan", `${overscan}vmin`);
@@ -38,22 +48,25 @@ export default function Cruscotto() {
     };
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
-  }, []);
+  }, [tv]);
 
-  const [next, ...later] = sample.deadlines;
-  const { todo, inCart } = sample.shopping;
-  const mood = { night: false, justAdded: false, daysLeft: sample.deadlines.map((d) => d.daysLeft), shoppingCount: todo.length };
+  const [next, ...later] = data.deadlines;
+  const { todo, inCart } = data.shopping;
+  const mood = { night: false, justAdded: false, daysLeft: data.deadlines.map((d) => d.daysLeft), shoppingCount: todo.length };
   const says = next && next.daysLeft <= 7
     ? `${next.title}: scade tra ${next.daysLeft} ${giorni(next.daysLeft)}.`
-    : `Ci sono ${todo.length} cose da prendere.`;
-  const marked = sample.deadlines.filter((d) => d.due.getMonth() === today.getMonth()).map((d) => d.due.getDate());
-  const soon = sample.deadlines.filter((d) => d.daysLeft <= 30).length;
+    : todo.length ? `${todo.length === 1 ? "C'è 1 cosa" : `Ci sono ${todo.length} cose`} da prendere.` : "La lista della spesa è vuota.";
+  const marked = data.deadlines.filter((d) => d.due.getMonth() === today.getMonth()).map((d) => d.due.getDate());
+  const soon = data.deadlines.filter((d) => d.daysLeft <= 30).length;
+  const shown = tv ? channel : 1;
+  // Nella PWA i moduli portano alla sezione; sulla TV no.
+  const to = (href: string, node: ReactNode) => (tv ? node : <Link href={href} className="block rounded-module active:translate-y-px">{node}</Link>);
 
   return (
     <div className="crt min-h-[100dvh]">
       {/* ——— Schermi grandi: TV 1920×1280, desktop ——— */}
-      <main className="hidden h-[100dvh] grid-cols-12 gap-10 p-[calc(2.5rem+var(--overscan))] lg:grid">
-        {channel === 1 && (
+      <main className={`hidden grid-cols-12 gap-10 p-[calc(2.5rem+var(--overscan))] lg:grid ${tv ? "h-[100dvh]" : "h-[calc(100dvh-5.5rem)]"}`}>
+        {shown === 1 && (
           <>
             <div className="col-span-3 flex flex-col justify-between">
               <Clock className="text-[clamp(7rem,12vw,14rem)]" />
@@ -62,7 +75,7 @@ export default function Cruscotto() {
 
             <div className="col-span-6 flex flex-col">
               <p className="pb-3 text-xl text-muted">In onda ora</p>
-              {next && (
+              {next ? (
                 <section aria-label="Prossima scadenza" className="flex flex-col gap-6 border-t-4 border-ink pt-6">
                   <div className="flex items-end gap-6">
                     <Big className="text-[clamp(8rem,13vw,13rem)] text-accent-text">{two(next.daysLeft)}</Big>
@@ -74,28 +87,40 @@ export default function Cruscotto() {
                   </div>
                   <TickRuler daysLeft={next.daysLeft} />
                 </section>
+              ) : (
+                <section aria-label="Spesa" className="flex flex-col gap-6 border-t-4 border-ink pt-6">
+                  <div className="flex items-end gap-6">
+                    <Big className="text-[clamp(8rem,13vw,13rem)]">{two(todo.length)}</Big>
+                    <p className="pb-3 text-3xl text-muted">da prendere</p>
+                  </div>
+                  <p className="text-3xl leading-snug">{todo.slice(0, 6).join(", ") || "La lista è vuota."}</p>
+                </section>
               )}
               <section aria-label="Promemoria di oggi" className="mt-8 flex flex-col border-t border-line">
-                {sample.reminders.slice(0, 2).map((r) => <ReminderRow key={r.title} r={r} size="md" />)}
+                {data.reminders.length
+                  ? data.reminders.slice(0, 2).map((r) => <ReminderRow key={r.title} r={r} size="md" />)
+                  : <p className="py-5 text-2xl text-muted">Nessun promemoria per oggi.</p>}
               </section>
-              <section aria-label="Spesa" className="mt-auto flex items-center gap-8 border-t border-line pt-6">
-                <Big className="text-7xl">{two(todo.length)}</Big>
-                <p className="text-2xl text-muted">da prendere</p>
-                <DotGrid filled={todo.length} total={todo.length + inCart.length} cols={todo.length + inCart.length} className="ml-auto w-64" />
-              </section>
+              {next && (
+                <section aria-label="Spesa" className="mt-auto flex items-center gap-8 border-t border-line pt-6">
+                  <Big className="text-7xl">{two(todo.length)}</Big>
+                  <p className="text-2xl text-muted">da prendere</p>
+                  <DotGrid filled={todo.length} total={todo.length + inCart.length} cols={Math.max(todo.length + inCart.length, 1)} className="ml-auto w-64" />
+                </section>
+              )}
             </div>
 
             <div className="col-span-3 flex flex-col gap-6">
               <RobyPanel expression={expressionFor(mood)} says={says} className="flex-1" />
               <div className="grid grid-cols-2 gap-4">
-                <Module label="Spesa"><Big className="text-6xl">{two(todo.length)}</Big></Module>
-                <Module label="Scadenze in 30 giorni"><Big className="text-6xl">{two(soon)}</Big></Module>
+                {to("/spesa", <Module label="Spesa"><Big className="text-6xl">{two(todo.length)}</Big></Module>)}
+                {to("/scadenze", <Module label="Scadenze in 30 giorni"><Big className="text-6xl">{two(soon)}</Big></Module>)}
               </div>
             </div>
           </>
         )}
 
-        {channel === 2 && (
+        {shown === 2 && (
           <>
             <div className="col-span-5 flex flex-col justify-between">
               <div>
@@ -111,26 +136,29 @@ export default function Cruscotto() {
           </>
         )}
 
-        {channel === 3 && (
+        {shown === 3 && (
           <>
             <div className="col-span-3 flex flex-col justify-between">
               <Clock className="text-[clamp(7rem,12vw,14rem)]" />
               <DateBlock today={today} />
             </div>
             <section aria-label="Promemoria" className="col-span-9 flex flex-col self-center border-t-4 border-ink">
-              {sample.reminders.map((r) => <ReminderRow key={r.title} r={r} size="lg" />)}
+              {data.reminders.length
+                ? data.reminders.map((r) => <ReminderRow key={r.title} r={r} size="lg" />)
+                : <p className="py-8 text-5xl text-muted">Nessun promemoria.</p>}
             </section>
           </>
         )}
 
-        {channel === 4 && (
+        {shown === 4 && (
           <>
             <div className="col-span-4 flex flex-col justify-between">
               <DateBlock today={today} />
               <MonthDots today={today} marked={marked} className="w-full max-w-sm" />
             </div>
             <section aria-label="Scadenze" className="col-span-8 flex flex-col self-center">
-              {sample.deadlines.map((d, i) => (
+              {data.deadlines.length === 0 && <p className="border-t-4 border-ink py-8 text-5xl text-muted">Nessuna scadenza.</p>}
+              {data.deadlines.map((d, i) => (
                 <div key={d.title} className={`flex items-start gap-8 py-6 ${i === 0 ? "border-t-4 border-ink" : "border-t border-line"}`}>
                   <Big className={`w-[2.2ch] text-[9rem] ${i === 0 ? "text-accent-text" : ""}`}>{two(d.daysLeft)}</Big>
                   <div className="flex flex-col gap-1 pt-4">
@@ -143,18 +171,21 @@ export default function Cruscotto() {
           </>
         )}
 
-        {/* OSD del canale nell'angolo: compare al cambio e sparisce. */}
-        <p key={osdKey} aria-live="polite"
-          className="fixed top-[calc(2rem+var(--overscan))] right-[calc(2.5rem+var(--overscan))] z-50 [font-stretch:75%] font-semibold text-7xl text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
-          <span className="sr-only">Canale </span>{channel}<span className="sr-only">, {CHANNELS[channel]}</span>
-        </p>
+        {tv && (
+          // OSD del canale nell'angolo: compare al cambio e sparisce.
+          <p key={osdKey} aria-live="polite"
+            className="fixed top-[calc(2rem+var(--overscan))] right-[calc(2.5rem+var(--overscan))] z-50 [font-stretch:75%] font-semibold text-7xl text-accent-text motion-safe:animate-[osd_2.5s_steps(1)_forwards]">
+            <span className="sr-only">Canale </span>{channel}<span className="sr-only">, {CHANNELS[channel]}</span>
+          </p>
+        )}
       </main>
 
       {/* ——— Telefono e schermi medi: gli stessi moduli, in colonna per rilevanza ——— */}
-      <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pt-6 pb-10 md:max-w-3xl lg:hidden">
+      <main className={`mx-auto flex w-full max-w-md flex-col gap-4 px-4 pt-6 md:max-w-3xl lg:hidden ${tv ? "pb-10" : "pb-32"}`}>
         <section aria-label="Oggi" className="flex flex-col gap-4 pb-2">
           <div className="flex items-end justify-between">
             <div>
+              <h1 className="sr-only">Oggi</h1>
               <Big className="text-[7.5rem]">{today.getDate()}</Big>
               <p className="text-3xl font-semibold capitalize">{fmt(today, { month: "long" })}</p>
               <p className="text-3xl text-muted">{today.getFullYear()}</p>
@@ -165,7 +196,7 @@ export default function Cruscotto() {
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {next && (
+          {next && to("/scadenze", (
             <Module label="In primo piano">
               <div className="flex items-end gap-3">
                 <Big className="text-7xl text-accent-text">{two(next.daysLeft)}</Big>
@@ -174,21 +205,29 @@ export default function Cruscotto() {
               <p className="text-2xl font-semibold">{next.title}</p>
               <TickRuler daysLeft={next.daysLeft} className="h-8" />
             </Module>
-          )}
-          <Module label="Spesa">
-            <div className="flex items-end gap-3">
-              <Big className="text-7xl">{two(todo.length)}</Big>
-              <p className="pb-1 text-xl text-muted">da prendere</p>
-            </div>
-            <DotGrid filled={todo.length} total={todo.length + inCart.length} cols={10} className="mt-auto" />
-          </Module>
+          ))}
+          {to("/spesa", (
+            <Module label="Spesa" className="h-full">
+              <div className="flex items-end gap-3">
+                <Big className="text-7xl">{two(todo.length)}</Big>
+                <p className="pb-1 text-xl text-muted">da prendere</p>
+              </div>
+              {todo.length + inCart.length > 0
+                ? <DotGrid filled={todo.length} total={todo.length + inCart.length} cols={10} className="mt-auto" />
+                : <p className="text-muted">La lista è vuota.</p>}
+            </Module>
+          ))}
         </div>
 
-        <Module label="Promemoria">
-          {sample.reminders.slice(0, 2).map((r) => <ReminderRow key={r.title} r={r} size="sm" />)}
-        </Module>
+        {to("/promemoria", (
+          <Module label="Promemoria">
+            {data.reminders.length
+              ? data.reminders.slice(0, 2).map((r) => <ReminderRow key={r.title} r={r} size="sm" />)
+              : <p className="text-lg text-muted">Nessun promemoria per oggi.</p>}
+          </Module>
+        ))}
 
-        {later.length > 0 && (
+        {later.length > 0 && to("/scadenze", (
           <Module label="Poi">
             {later.map((d) => (
               <p key={d.title} className="flex items-baseline justify-between gap-4 text-lg">
@@ -196,7 +235,7 @@ export default function Cruscotto() {
               </p>
             ))}
           </Module>
-        )}
+        ))}
 
         <Module tone="accent" className="flex-row items-center gap-4">
           <RobyTile expression={expressionFor(mood)} className="size-16" />
@@ -205,10 +244,6 @@ export default function Cruscotto() {
       </main>
     </div>
   );
-}
-
-function Big({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <span className={`block leading-[0.82] font-semibold tracking-[-0.05em] ${className}`}>{children}</span>;
 }
 
 function DateBlock({ today }: { today: Date }) {
@@ -223,7 +258,7 @@ function DateBlock({ today }: { today: Date }) {
   );
 }
 
-function ReminderRow({ r, size }: { r: { time: string; title: string; note?: string }; size: "sm" | "md" | "lg" }) {
+function ReminderRow({ r, size }: { r: DashReminder; size: "sm" | "md" | "lg" }) {
   const t = { sm: "text-4xl w-[5ch]", md: "text-6xl w-[5ch]", lg: "text-8xl w-[5ch]" }[size];
   const h = { sm: "text-lg", md: "text-3xl", lg: "text-5xl" }[size];
   return (

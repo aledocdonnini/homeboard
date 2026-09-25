@@ -4,6 +4,7 @@ import { SignOut } from "@phosphor-icons/react";
 import { signOut } from "@/features/auth/signOut";
 import type { Session } from "@supabase/supabase-js";
 import Button from "@/components/ui/Button";
+import Big from "@/components/dash/Big";
 import PageHeader from "@/components/ui/PageHeader";
 import type { Household } from "./HouseholdGate";
 import InviteButton from "./InviteButton";
@@ -12,15 +13,20 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function HouseholdPanel({ house, session }: { house: Household; session: Session }) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-8 px-4 pt-4 pb-32">
-      <PageHeader title={house.name} />
+    <main className="mx-auto flex w-full max-w-md flex-col gap-8 px-4 pt-6 pb-32 lg:max-w-2xl">
+      <PageHeader title="Casa">
+        <p className="flex items-end gap-3">
+          <Big className="text-8xl">{String(house.household_members.length).padStart(2, "0")}</Big>
+          <span className="pb-2 text-xl text-muted">{house.household_members.length === 1 ? "persona" : "persone"} in {house.name}</span>
+        </p>
+      </PageHeader>
 
       <section aria-labelledby="members" className="flex flex-col gap-3">
         <h2 id="members" className="text-xl font-semibold">Chi abita qui</h2>
         <ul className="flex flex-col">
           {house.household_members.map((m) => (
-            <li key={m.user_id} className="flex min-h-12 items-center justify-between gap-4 border-b border-line last:border-b-0">
-              <span className="text-lg">
+            <li key={m.user_id} className="flex min-h-14 items-center justify-between gap-4 border-b border-line last:border-b-0">
+              <span className="text-xl font-medium">
                 {capitalize(m.display_name ?? "Membro")}
                 {m.user_id === session.user.id && <span className="text-muted"> (tu)</span>}
               </span>
@@ -31,7 +37,7 @@ export default function HouseholdPanel({ house, session }: { house: Household; s
         <InviteButton householdId={house.id} householdName={house.name} />
       </section>
 
-      <section aria-labelledby="account" className="flex flex-col gap-3 border-t border-line pt-6">
+      <section aria-labelledby="account" className="flex flex-col gap-3 border-t-4 border-ink pt-5">
         <h2 id="account" className="text-xl font-semibold">Il tuo account</h2>
         <p className="text-muted">{session.user.email}</p>
         <Button variant="quiet" onClick={signOut} className="self-start">

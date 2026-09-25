@@ -1,8 +1,8 @@
 "use client";
 
+import Today from "@/features/home/Today";
 import HouseholdGate from "@/features/household/HouseholdGate";
-import ShoppingList from "@/features/shopping/ShoppingList";
 
 export default function Page() {
-  return <HouseholdGate>{(house) => <ShoppingList householdId={house.id} />}</HouseholdGate>;
+  return <HouseholdGate>{(house) => <Today householdId={house.id} />}</HouseholdGate>;
 }

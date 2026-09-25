@@ -3,7 +3,7 @@ import Button from "@/components/ui/Button";
 import Checkbox from "@/components/ui/Checkbox";
 import EmptyState from "@/components/ui/EmptyState";
 import Field from "@/components/ui/Field";
-import Osd from "@/components/ui/Osd";
+import Big from "@/components/dash/Big";
 import DotGrid from "@/components/dash/DotGrid";
 import MonthDots from "@/components/dash/MonthDots";
 import TickRuler from "@/components/dash/TickRuler";
@@ -75,7 +75,7 @@ export default function Page() {
           <label className="flex items-center gap-3 text-lg"><Checkbox defaultChecked /> Latte</label>
         </div>
         <div className="flex flex-wrap items-end gap-8">
-          <Osd value={5} label="da prendere" />
+          <p className="flex items-end gap-3"><Big className="text-8xl">05</Big><span className="pb-2 text-xl text-muted">da prendere</span></p>
         </div>
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="flex flex-col gap-2"><span className="text-sm text-muted">Pallini</span><DotGrid filled={5} total={7} cols={7} /></div>

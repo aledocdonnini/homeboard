@@ -42,7 +42,7 @@ export default function SortableGroup({ items, onMove, render }: {
           key={item.id}
           ref={(el) => { if (el) rows.current.set(item.id, el); else rows.current.delete(item.id); }}
           style={drag?.id === item.id ? { transform: `translateY(${drag.dy}px)`, position: "relative", zIndex: 1 } : undefined}
-          className={`flex items-center gap-1 rounded-control ${drag?.id === item.id ? "bg-surface shadow-[0_8px_24px_rgb(23_25_30/0.18)]" : ""}`}
+          className={`flex items-center gap-1 border-b border-line last:border-b-0 ${drag?.id === item.id ? "rounded-control bg-surface shadow-[0_8px_24px_rgb(23_25_30/0.18)]" : ""}`}
         >
           <div className="min-w-0 flex-1">{render(item)}</div>
           {items.length < 2 ? <div className="size-11 shrink-0" /> : (

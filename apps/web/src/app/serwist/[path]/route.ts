@@ -5,7 +5,7 @@ import { createSerwistRoute } from "@serwist/turbopack";
 const revision = crypto.randomUUID();
 
 // Le pagine dell'app, precaricate: si aprono anche offline, pure al primo avvio senza rete.
-const PAGES = ["/", "/casa", "/promemoria", "/scadenze", "/accedi"];
+const PAGES = ["/", "/spesa", "/casa", "/promemoria", "/scadenze", "/accedi"];
 
 export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } = createSerwistRoute({
   additionalPrecacheEntries: PAGES.map((url) => ({ url, revision })),

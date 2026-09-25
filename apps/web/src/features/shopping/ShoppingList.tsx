@@ -5,7 +5,8 @@ import { Plus } from "@phosphor-icons/react";
 import Button from "@/components/ui/Button";
 import Checkbox from "@/components/ui/Checkbox";
 import EmptyState from "@/components/ui/EmptyState";
-import Osd from "@/components/ui/Osd";
+import Big from "@/components/dash/Big";
+import DotGrid from "@/components/dash/DotGrid";
 import PageHeader from "@/components/ui/PageHeader";
 import { arrange, CATEGORIES, normalize, parseQuickAdd, suggest, type Item } from "./items";
 import { useShoppingList } from "./useShoppingList";
@@ -24,6 +25,7 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
   const current = text.split(/[,;\n]/).at(-1) ?? "";
   const suggestions = suggest(list.stats, current, onList);
   const todo = groups.reduce((n, g) => n + g.items.length, 0);
+  const total = todo + checked.length;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,9 +40,13 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-4 pb-32">
+    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-6 pb-32 lg:max-w-2xl">
       <PageHeader title="Spesa">
-        {list.loaded && <Osd value={todo} label="da prendere" />}
+        <p className="flex items-end gap-3">
+          <Big className="text-8xl">{list.loaded ? String(todo).padStart(2, "0") : "--"}</Big>
+          <span className="pb-2 text-xl text-muted">da prendere{checked.length ? `, ${checked.length} nel carrello` : ""}</span>
+        </p>
+        {total > 0 && <DotGrid filled={todo} total={total} cols={10} />}
       </PageHeader>
       <SyncStatus pending={list.pending} />
 
@@ -88,20 +94,20 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
       ) : (
         groups.map((g) => (
           <section key={g.category} aria-labelledby={`cat-${g.category}`} className="flex flex-col">
-            <h2 id={`cat-${g.category}`} className="pb-1 text-sm font-semibold text-muted">{g.label}</h2>
+            <h2 id={`cat-${g.category}`} className="text-base font-semibold text-muted">{g.label}</h2>
             <SortableGroup items={g.items} onMove={list.move} render={(item) => <Row item={item} list={list} />} />
           </section>
         ))
       )}
 
       {checked.length > 0 && (
-        <section aria-labelledby="checked" className="flex flex-col border-t border-line pt-4">
+        <section aria-labelledby="checked" className="flex flex-col border-t-4 border-ink pt-4">
           <div className="flex items-center justify-between">
-            <h2 id="checked" className="text-sm font-semibold text-muted">Nel carrello ({checked.length})</h2>
+            <h2 id="checked" className="text-base font-semibold text-muted">Nel carrello ({checked.length})</h2>
             <Button variant="link" onClick={list.clearChecked}>Togli dalla lista</Button>
           </div>
           <ul>
-            {checked.map((item) => <li key={item.id} className="pr-11"><Row item={item} list={list} /></li>)}
+            {checked.map((item) => <li key={item.id} className="border-b border-line pr-11 last:border-b-0"><Row item={item} list={list} /></li>)}
           </ul>
         </section>
       )}
@@ -111,9 +117,9 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
 
 function Row({ item, list }: { item: Item; list: ReturnType<typeof useShoppingList> }) {
   return (
-    <div className="flex min-h-13 items-center gap-3">
+    <div className="flex min-h-14 items-center gap-3">
       <Checkbox id={`item-${item.id}`} checked={item.checked} onChange={(e) => list.setChecked(item.id, e.target.checked)} />
-      <label htmlFor={`item-${item.id}`} className={`flex-1 py-3 text-lg leading-snug ${item.checked ? "text-muted line-through" : ""}`}>
+      <label htmlFor={`item-${item.id}`} className={`flex-1 py-3 text-xl leading-snug font-medium ${item.checked ? "text-muted line-through font-normal" : ""}`}>
         {item.name}
       </label>
       {!item.checked && (

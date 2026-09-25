@@ -7,7 +7,8 @@ import { House } from "@phosphor-icons/react";
 // I tasti di preselezione del televisore. Il numero è il canale della TV che mostra la stessa cosa.
 // Premuto = nero, come un tasto Braun abbassato.
 const TABS = [
-  { href: "/", label: "Spesa", key: "2" },
+  { href: "/", label: "Oggi", key: "1" },
+  { href: "/spesa", label: "Spesa", key: "2" },
   { href: "/promemoria", label: "Promemoria", key: "3" },
   { href: "/scadenze", label: "Scadenze", key: "4" },
   { href: "/casa", label: "Casa", key: null },
@@ -18,7 +19,7 @@ export default function TabBar() {
   if (!TABS.some((t) => t.href === path)) return null;
   return (
     <nav aria-label="Sezioni" className="fixed inset-x-0 bottom-0 border-t border-line bg-paper pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto grid max-w-md grid-cols-4 gap-1.5 px-2 py-2">
+      <ul className="mx-auto grid max-w-lg grid-cols-5 gap-1.5 px-2 py-2">
         {TABS.map((t) => (
           <li key={t.href}>
             <Link
@@ -28,7 +29,7 @@ export default function TabBar() {
                 active:translate-y-px aria-[current=page]:border-ink aria-[current=page]:bg-ink aria-[current=page]:text-paper"
             >
               {t.key ? <span aria-hidden className="[font-stretch:75%] font-semibold text-2xl leading-none">{t.key}</span> : <House aria-hidden weight="bold" className="size-5" />}
-              <span className="text-xs font-semibold">{t.label}</span>
+              <span className="text-[0.7rem] font-semibold">{t.label}</span>
             </Link>
           </li>
         ))}
