@@ -7,12 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "predev": "npm run build -w roby-face",
+    "prebuild": "npm run build -w roby-face"
   },
   "dependencies": {
     "next": "16.3.6",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "roby-face": "*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,0 +1,28 @@
+{
+  "name": "roby-face",
+  "version": "0.1.0",
+  "description": "Volto animato di Roby come web component: 24 espressioni, voce del browser o audio esterno.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./engine": {
+      "types": "./dist/robot-face.d.ts",
+      "default": "./dist/robot-face.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/index.js"
+  ],
+  "scripts": {
+    "build": "tsc -p . && cp src/robot-face.js src/robot-face.d.ts dist/",
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "license": "UNLICENSED",
+  "author": "Alessandro Donnini"
+}

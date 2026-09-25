@@ -12,7 +12,7 @@
     "dev": "npm run dev -w @homeboard/web",
     "build": "npm run build -w @homeboard/web",
     "lint": "npm run lint -w @homeboard/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build -w roby-face && npm run typecheck --workspaces --if-present",
     "test": "node --test \"apps/*/src/**/*.test.ts\" \"packages/*/src/**/*.test.ts\" \"supabase/functions/**/*.test.ts\"",
     "db:start": "supabase start",
     "db:reset": "supabase db reset"
