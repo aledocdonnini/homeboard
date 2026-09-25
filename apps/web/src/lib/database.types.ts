@@ -106,6 +106,44 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"shopping_item_stats": {
+                  Row: {
+                    "category": string,"household_id": string,"last_used": string,"name": string,"name_norm": string,"uses": number
+                  }
+                  Insert: {
+                    "category": string,"household_id": string,"last_used"?: string,"name": string,"name_norm": string,"uses"?: number
+                  }
+                  Update: {
+                    "category"?: string,"household_id"?: string,"last_used"?: string,"name"?: string,"name_norm"?: string,"uses"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shopping_item_stats_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"shopping_items": {
+                  Row: {
+                    "category": string,"checked": boolean,"created_at": string,"created_by": string | null,"deleted_at": string | null,"household_id": string,"id": string,"name": string,"position": number,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "category"?: string,"checked"?: boolean,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"household_id": string,"id"?: string,"name": string,"position"?: number,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "category"?: string,"checked"?: boolean,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"household_id"?: string,"id"?: string,"name"?: string,"position"?: number,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shopping_items_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -123,6 +161,9 @@ isOneToOne: false
                            },
 "create_household":
 { Args: { "name": string }; Returns: string
+                           },
+"default_display_name":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "device_heartbeat":
 { Args: Record<PropertyKey, never>; Returns: undefined
