@@ -1,7 +1,7 @@
 "use client";
 
 import { SignOut } from "@phosphor-icons/react";
-import { supabase } from "@/lib/supabase";
+import { signOut } from "@/features/auth/signOut";
 import type { Session } from "@supabase/supabase-js";
 import Button from "@/components/ui/Button";
 import PageHeader from "@/components/ui/PageHeader";
@@ -34,7 +34,7 @@ export default function HouseholdPanel({ house, session }: { house: Household; s
       <section aria-labelledby="account" className="flex flex-col gap-3 border-t border-line pt-6">
         <h2 id="account" className="text-xl font-semibold">Il tuo account</h2>
         <p className="text-muted">{session.user.email}</p>
-        <Button variant="quiet" onClick={() => supabase.auth.signOut()} className="self-start">
+        <Button variant="quiet" onClick={signOut} className="self-start">
           <SignOut aria-hidden weight="bold" className="size-5" /> Esci
         </Button>
       </section>

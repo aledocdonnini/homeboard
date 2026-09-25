@@ -21,7 +21,20 @@ export default function HouseholdGate({ children }: { children: (house: Househol
   useEffect(() => {
     if (session === null) router.replace(`/accedi?next=${encodeURIComponent(location.pathname)}`);
     if (!session) return;
-    query().then(({ data, error }) => (error ? setError(error.message) : setHouseholds(data)));
+    // Prima la casa salvata sul dispositivo (si apre subito, anche offline o con la rete a singhiozzo),
+    // poi quella del server quando risponde.
+    const key = `hb:households:${session.user.id}`;
+    let cached: Household[] | null = null;
+    try { cached = JSON.parse(localStorage.getItem(key) ?? "null"); } catch {}
+    Promise.resolve().then(() => cached && setHouseholds(cached));
+    query().then(({ data, error }) => {
+      if (!error) {
+        setHouseholds(data);
+        try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
+      } else if (!cached) {
+        setError("Non riesco a raggiungere il server. Controlla la connessione e riprova.");
+      }
+    });
   }, [session, router, version]);
 
   if (error) return <p role="alert" className="p-6">{error}</p>;

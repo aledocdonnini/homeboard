@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { arrange, guessCategory, mergeRow, parseQuickAdd, positionBetween, suggest, type Item, type Stat } from "./items.ts";
+import { arrange, guessCategory, parseQuickAdd, positionBetween, suggest, type Item, type Stat } from "./items.ts";
 
 const item = (over: Partial<Item>): Item => ({
   id: "1", household_id: "h", name: "Latte", category: "latticini", checked: false, position: 0,
@@ -58,9 +58,3 @@ test("arrange: reparti in ordine di supermercato, spuntati a parte, tombstone fu
   assert.deepEqual(checked.map((i) => i.name), ["Uova", "Latte"]);
 });
 
-test("mergeRow: vince il server più recente, a prescindere dal formato del timestamp", () => {
-  const local = [item({ checked: true, updated_at: "2026-09-26T10:00:05.000000+00:00" })];
-  assert.equal(mergeRow(local, item({ checked: false, updated_at: "2026-09-26T10:00:01+00:00" }))[0]!.checked, true);
-  assert.equal(mergeRow(local, item({ checked: false, updated_at: "2026-09-26 10:00:09+00" }))[0]!.checked, false);
-  assert.equal(mergeRow(local, item({ id: "2" })).length, 2);
-});

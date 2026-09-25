@@ -2,7 +2,7 @@
 -- Anna è membro, Carla un'estranea, la TV un dispositivo della casa.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(18);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'anna@pgtap.invalid', false),
@@ -43,8 +43,15 @@ select throws_ok(
 select throws_ok(
   $$ insert into public.shopping_items (household_id, name) values ('00000000-0000-0000-0000-000000000001', '   ') $$,
   '23514', null, 'Nome vuoto rifiutato');
+select throws_ok(
+  $$ insert into public.shopping_items (household_id, name) values ('00000000-0000-0000-0000-000000000001', 'LATTE') $$,
+  '23505', null, 'La stessa cosa due volte in lista: no (offline da due telefoni)');
 update public.shopping_items set deleted_at = now();
+select lives_ok(
+  $$ insert into public.shopping_items (household_id, name) values ('00000000-0000-0000-0000-000000000001', 'Latte') $$,
+  'Tolta dalla lista, si può aggiungere di nuovo');
 select is((select count(*) from public.shopping_items where deleted_at is not null), 1::bigint, 'Cancellare = tombstone');
+update public.shopping_items set deleted_at = now() where deleted_at is null;
 
 -- ——— Carla, estranea ———
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000c","role":"authenticated"}', true);
@@ -54,7 +61,7 @@ select is_empty($$ update public.shopping_items set checked = true returning 1 $
 
 -- ——— La TV ———
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated","is_anonymous":true}', true);
-select is((select name from public.shopping_items), ' Latte ', 'La TV legge la lista');
+select is((select count(*) from public.shopping_items), 2::bigint, 'La TV legge la lista (anche le righe tolte, per la sincronizzazione)');
 select is_empty($$ update public.shopping_items set checked = true returning 1 $$, 'La TV non modifica');
 select throws_ok(
   $$ insert into public.shopping_items (household_id, name) values ('00000000-0000-0000-0000-000000000001', 'Dalla TV') $$,

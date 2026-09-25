@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import { arrange, CATEGORIES, normalize, parseQuickAdd, suggest, type Item } from "./items";
 import { useShoppingList } from "./useShoppingList";
 import SortableGroup from "./SortableGroup";
+import SyncStatus from "./SyncStatus";
 
 export default function ShoppingList({ householdId }: { householdId: string }) {
   const list = useShoppingList(householdId);
@@ -41,6 +42,7 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
       <PageHeader title="Spesa">
         {list.loaded && <Osd value={todo} label="da prendere" />}
       </PageHeader>
+      <SyncStatus pending={list.pending} />
 
       <form onSubmit={submit} className="flex flex-col gap-3">
         <label htmlFor="add" className="sr-only">Aggiungi alla lista</label>
@@ -71,7 +73,7 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
         )}
       </form>
 
-      {list.error && <p role="alert" className="text-danger">Non sono riuscito a salvare: {list.error}</p>}
+      {list.error && <p role="alert" className="text-danger">Una modifica è stata rifiutata dal server: {list.error}</p>}
 
       {!list.loaded ? (
         <div aria-hidden className="flex flex-col gap-3">

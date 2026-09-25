@@ -1,102 +1,83 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/localdb";
 import { supabase } from "@/lib/supabase";
-import { guessCategory, mergeRow, normalize, positionBetween, type Item, type Stat } from "./items";
+import { change, errorKey, pendingCount, receive, sync } from "./engine";
+import { guessCategory, normalize, positionBetween, type Item } from "./items";
+import type { Op } from "./sync";
 
-const COLUMNS = "id, household_id, name, category, checked, position, updated_at, deleted_at";
-// Le righe ottimistiche nascono "vecchissime": la prima risposta del server le sostituisce sempre.
-const LOCAL = "1970-01-01T00:00:00Z";
-
-type Patch = Partial<Pick<Item, "name" | "category" | "checked" | "position" | "deleted_at">>;
-
-// Lista della casa: fetch iniziale, realtime, e scritture ottimistiche (lo stato locale cambia subito).
-// ponytail: solo online; la fase 4 mette qui sotto Dexie e la coda di modifiche offline, l'API resta questa.
+// Lista della casa letta dalla copia locale (funziona offline). Le modifiche vanno in coda e partono con la rete;
+// il realtime e i ritorni in primo piano tengono la copia allineata. Regole dei conflitti in sync.ts.
 export function useShoppingList(householdId: string) {
-  const [items, setItems] = useState<Item[]>([]);
-  const [stats, setStats] = useState<Stat[]>([]);
-  const [error, setError] = useState("");
-  const [loaded, setLoaded] = useState(false);
-
-  const refetch = useCallback(async () => {
-    const [list, sugg] = await Promise.all([
-      supabase.from("shopping_items").select(COLUMNS).eq("household_id", householdId).is("deleted_at", null),
-      supabase.from("shopping_item_stats").select("name_norm, name, category, uses").eq("household_id", householdId)
-        .order("uses", { ascending: false }).limit(200),
-    ]);
-    if (list.error || sugg.error) return setError((list.error ?? sugg.error)!.message);
-    setItems((prev) => list.data.reduce(mergeRow, prev));
-    setStats(sugg.data);
-    setLoaded(true);
-  }, [householdId]);
+  const items = useLiveQuery(() => db.items.where("household_id").equals(householdId).toArray(), [householdId]);
+  const stats = useLiveQuery(() => db.stats.where("household_id").equals(householdId).reverse().sortBy("uses"), [householdId]) ?? [];
+  const pending = useLiveQuery(() => pendingCount(householdId), [householdId]) ?? 0;
+  const error = useLiveQuery(() => db.meta.get(errorKey(householdId)), [householdId])?.value ?? "";
+  // null = mai scaricata; undefined = ancora in lettura.
+  const synced = useLiveQuery(async () => (await db.meta.get(`pull:${householdId}`)) ?? null, [householdId]);
 
   useEffect(() => {
-    // Realtime per gli altri dispositivi; al (ri)collegamento e al ritorno in primo piano si rilegge tutto,
-    // perché su mobile il socket cade quando l'app va in background.
+    const go = () => void sync(householdId);
     const channel = supabase
       .channel(`shopping:${householdId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shopping_items", filter: `household_id=eq.${householdId}` },
-        (payload) => payload.new && "id" in payload.new && setItems((prev) => mergeRow(prev, payload.new as Item)))
-      .subscribe((status) => status === "SUBSCRIBED" && refetch());
-    const onVisible = () => document.visibilityState === "visible" && refetch();
+        (payload) => payload.new && "id" in payload.new && void receive(householdId, [payload.new as Item]))
+      .subscribe((status) => status === "SUBSCRIBED" && go());
+    // Su mobile il socket cade in background: al ritorno in primo piano e della rete si risincronizza.
+    const onVisible = () => document.visibilityState === "visible" && go();
+    // ponytail: niente Background Sync (Safari non c'è); se restano modifiche in coda si riprova ogni 30 s.
+    const retry = setInterval(async () => navigator.onLine && (await pendingCount(householdId)) > 0 && go(), 30_000);
+    addEventListener("online", go);
     document.addEventListener("visibilitychange", onVisible);
+    go();
     return () => {
+      clearInterval(retry);
+      removeEventListener("online", go);
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(channel);
     };
-  }, [householdId, refetch]);
+  }, [householdId]);
 
-  const fail = useCallback((message: string) => {
-    setError(message);
-    refetch(); // torna allo stato vero del server
-  }, [refetch]);
-
-  const update = useCallback(async (id: string, patch: Patch) => {
-    setError("");
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-    const { data, error } = await supabase.from("shopping_items").update(patch).eq("id", id).select(COLUMNS).single();
-    if (error) fail(error.message);
-    else setItems((prev) => mergeRow(prev, data));
-  }, [fail]);
+  const live = (items ?? []).filter((i) => !i.deleted_at);
+  const update = (id: string, patch: Extract<Op, { kind: "update" }>["patch"]) =>
+    change(householdId, [{ kind: "update", itemId: id, patch }]);
 
   /** Aggiunge dei nomi. Se una cosa è già in lista non la duplica; se era spuntata la rimette da comprare. */
-  const add = useCallback(async (names: string[]) => {
-    setError("");
-    const live = items.filter((i) => !i.deleted_at);
-    const rows: Item[] = [];
+  function add(names: string[]) {
+    const ops: Op[] = [];
+    const added: Item[] = [];
     for (const name of names) {
-      const existing = live.find((i) => normalize(i.name) === normalize(name));
+      const n = normalize(name);
+      const existing = live.find((i) => normalize(i.name) === n);
       if (existing) {
-        if (existing.checked) update(existing.id, { checked: false });
+        if (existing.checked) ops.push({ kind: "update", itemId: existing.id, patch: { checked: false } });
         continue;
       }
-      if (rows.some((r) => normalize(r.name) === normalize(name))) continue;
+      if (added.some((r) => normalize(r.name) === n)) continue;
       const category = guessCategory(name, stats);
-      const last = Math.max(-1, ...[...live, ...rows].filter((i) => i.category === category).map((i) => i.position));
-      rows.push({ id: crypto.randomUUID(), household_id: householdId, name, category, checked: false,
-        position: positionBetween(last), updated_at: LOCAL, deleted_at: null });
+      const last = Math.max(-1, ...[...live, ...added].filter((i) => i.category === category).map((i) => i.position));
+      const row = { id: crypto.randomUUID(), household_id: householdId, name, category, position: positionBetween(last) };
+      added.push({ ...row, checked: false, updated_at: "", deleted_at: null });
+      ops.push({ kind: "insert", itemId: row.id, row });
     }
-    if (!rows.length) return;
-    setItems((prev) => [...prev, ...rows]);
-    const { data, error } = await supabase.from("shopping_items")
-      .insert(rows.map(({ id, household_id, name, category, position }) => ({ id, household_id, name, category, position })))
-      .select(COLUMNS);
-    if (error) return fail(error.message);
-    setItems((prev) => data.reduce(mergeRow, prev));
-    refetch(); // aggiorna i suggerimenti
-  }, [householdId, items, stats, update, fail, refetch]);
-
-  const clearChecked = useCallback(async () => {
-    const ids = items.filter((i) => i.checked && !i.deleted_at).map((i) => i.id);
-    if (!ids.length) return;
-    const now = new Date().toISOString();
-    setItems((prev) => prev.map((i) => (ids.includes(i.id) ? { ...i, deleted_at: now } : i)));
-    const { error } = await supabase.from("shopping_items").update({ deleted_at: now }).in("id", ids);
-    if (error) fail(error.message);
-  }, [items, fail]);
+    if (ops.length) void change(householdId, ops);
+  }
 
   return {
-    items, stats, error, loaded, add, clearChecked,
+    items: live,
+    stats,
+    error,
+    pending,
+    /** Pronta quando c'è la copia locale e almeno un download riuscito (o non c'è rete per farlo). */
+    loaded: items !== undefined && synced !== undefined && (!!synced || live.length > 0 || !navigator.onLine),
+    add,
+    clearChecked: () => {
+      const now = new Date().toISOString();
+      const ops: Op[] = live.filter((i) => i.checked).map((i) => ({ kind: "update", itemId: i.id, patch: { deleted_at: now } }));
+      if (ops.length) void change(householdId, ops);
+    },
     setChecked: (id: string, checked: boolean) => update(id, { checked }),
     setCategory: (id: string, category: string) => update(id, { category }),
     /** Sposta fra due vicini dello stesso reparto (undefined = in cima / in fondo). */

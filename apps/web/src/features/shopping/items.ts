@@ -94,11 +94,3 @@ export function arrange(items: Item[]): { groups: Group[]; checked: Item[] } {
   return { groups, checked };
 }
 
-/** Riga arrivata dal server (fetch o realtime): vince la più recente secondo l'orologio del server. */
-export function mergeRow(items: Item[], row: Item): Item[] {
-  const i = items.findIndex((x) => x.id === row.id);
-  if (i === -1) return [...items, row];
-  // Date.parse e non confronto fra stringhe: REST e Realtime non formattano i timestamp allo stesso modo.
-  if (Date.parse(items[i]!.updated_at) > Date.parse(row.updated_at)) return items;
-  return items.with(i, row);
-}

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import "./globals.css";
+import ServiceWorker from "@/components/ServiceWorker";
 import TabBar from "@/components/TabBar";
 
 // Archivo: grotesk con asse di larghezza, regge i numeri giganti e il testo corrente.
@@ -18,6 +19,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Homeboard",
   description: "Spesa, promemoria e scadenze di casa",
+  applicationName: "Homeboard",
+  appleWebApp: { capable: true, title: "Homeboard", statusBarStyle: "default" },
+  icons: { icon: "/icons/192", apple: "/icons/180" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,8 +31,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${archivo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <TabBar />
+        <ServiceWorker>
+          {children}
+          <TabBar />
+        </ServiceWorker>
       </body>
     </html>
   );
