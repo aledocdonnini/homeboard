@@ -28,6 +28,17 @@ export default function LoginForm() {
     if (session) router.replace(nextPath());
   }, [session, router]);
 
+  // Link scaduto, già usato o sostituito da uno più recente: Supabase torna qui con l'errore nell'indirizzo.
+  useEffect(() => {
+    const params = new URLSearchParams(location.hash.slice(1) || location.search);
+    const code = params.get("error_code") ?? params.get("error");
+    if (!code) return;
+    history.replaceState(null, "", location.pathname + location.search.replace(/[?&]error[^&]*/g, ""));
+    Promise.resolve().then(() => setError(code === "otp_expired"
+      ? "Il link è scaduto o è già stato usato (vale solo l'ultimo che hai ricevuto). Chiedine uno nuovo qui sotto."
+      : `Accesso non riuscito: ${params.get("error_description") ?? code}`));
+  }, []);
+
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
