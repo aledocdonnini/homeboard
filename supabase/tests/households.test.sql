@@ -9,6 +9,9 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000b', 'bruno@pgtap.invalid', false),
   ('00000000-0000-0000-0000-00000000000c', 'carla@pgtap.invalid', false),
   ('00000000-0000-0000-0000-0000000000f1', null, true);
+-- Anna è l'unica che può creare case (come il proprietario in produzione).
+insert into public.signup_allowlist (email, can_create_household) values ('anna@test.it', true)
+  on conflict (email) do update set can_create_household = true;
 
 -- ——— Anna crea la casa ———
 set local role authenticated;

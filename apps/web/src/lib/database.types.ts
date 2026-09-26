@@ -208,6 +208,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"signup_allowlist": {
+                  Row: {
+                    "added_at": string,"can_create_household": boolean,"email": string,"household_id": string | null,"note": string | null
+                  }
+                  Insert: {
+                    "added_at"?: string,"can_create_household"?: boolean,"email": string,"household_id"?: string | null,"note"?: string | null
+                  }
+                  Update: {
+                    "added_at"?: string,"can_create_household"?: boolean,"email"?: string,"household_id"?: string | null,"note"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "signup_allowlist_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -217,8 +236,14 @@ isOneToOne: false
             "accept_invite":
 { Args: { "invite": string }; Returns: string
                            },
+"add_member":
+{ Args: { "email": string,"household": string }; Returns: string
+                           },
 "call_notify":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"can_create_household":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "can_read":
 { Args: { "hid": string }; Returns: boolean
@@ -241,6 +266,9 @@ isOneToOne: false
 "device_heartbeat":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"hook_before_user_created":
+{ Args: { "event": Json }; Returns: Json
+                           },
 "is_member":
 { Args: { "hid": string }; Returns: boolean
                            },
@@ -249,6 +277,9 @@ isOneToOne: false
                            },
 "is_real_user":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"join_listed_household":
+{ Args: { "address": string,"uid": string }; Returns: undefined
                            },
 "save_push_subscription":
 { Args: { "auth": string,"endpoint": string,"p256dh": string,"user_agent"?: string }; Returns: undefined

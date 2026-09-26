@@ -25,7 +25,7 @@ export default function CreateHousehold({ onCreated }: { onCreated: () => void }
       <div className="flex flex-col gap-4">
         <RobyTile expression="excited" />
         <h1 className="text-4xl font-bold tracking-tight">Crea la tua casa</h1>
-        <p className="text-muted">Poi invita chi ci abita. Se qualcuno ti ha già invitato, apri il link che ti ha mandato.</p>
+        <p className="text-muted">Poi aggiungi chi ci abita, con la sua email.</p>
       </div>
       <form onSubmit={create} className="flex flex-col gap-4">
         <Field id="name" label="Nome della casa" required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} error={error} />

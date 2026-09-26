@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/features/auth/useSession";
-import CreateHousehold from "./CreateHousehold";
+import NoHousehold from "./NoHousehold";
 
 const query = () => supabase.from("households").select("id, name, timezone, household_members(user_id, role, display_name), devices(id, name, last_seen_at)").order("created_at");
 export type Household = NonNullable<Awaited<ReturnType<typeof query>>["data"]>[number];
@@ -43,6 +43,6 @@ export default function HouseholdGate({ children }: { children: (house: Househol
   if (!session || !households) return null;
   // ponytail: una casa sola in interfaccia (la prima); lo schema ne permette più di una, aggiungi un selettore se servirà.
   const house = households[0];
-  if (!house) return <CreateHousehold onCreated={() => setVersion((v) => v + 1)} />;
+  if (!house) return <NoHousehold email={session.user.email ?? ""} onCreated={() => setVersion((v) => v + 1)} />;
   return children(house, session);
 }

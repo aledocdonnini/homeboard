@@ -22,7 +22,7 @@ Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
   - **funziona offline**: le modifiche vanno in coda e partono al ritorno della rete, con conflitti risolti da regole semplici e documentate.
 - **Promemoria:** data e ora, ripetizioni giornaliere, settimanali (anche con giorni scelti), mensili, annuali o personalizzate. La notifica arriva all'ora giusta, anche con l'app chiusa.
 - **Scadenze:** bollette, bollo, revisione, assicurazioni. Ripetizioni a mesi o anni (ogni 2 anni per la revisione) e avvisi in anticipo scelti per ognuna. "Fatta" apre da sola la scadenza successiva.
-- **Casa condivisa:** più persone, invito con un link, e televisori abbinati con un codice.
+- **Casa condivisa, solo su invito:** la casa la crea chi è autorizzato, e il proprietario aggiunge le persone con la loro email (entrano da sole al primo accesso). Chi non è in elenco non può registrarsi. I televisori si abbinano con un codice.
 - **TV:**
   - sei canali sui sei tasti originali: cruscotto, spesa, promemoria, scadenze, monoscopio, Roby;
   - filtro CRT, neve e fruscio al cambio canale, numero del canale in stile OSD;
@@ -154,10 +154,11 @@ Importa il repository, con **Root Directory** `apps/web` (il workspace npm si in
 
 ### Dopo il deploy
 
-1. **Sul telefono:** apri l'app, accedi, crea la casa.
-2. **Su iPhone:** *Condividi → Aggiungi alla schermata Home*. Le notifiche web su iOS arrivano solo così.
-3. **Notifiche:** attivale in *Casa*.
-4. **Raspberry:** segui [`device/README.md`](device/README.md), con `TV_URL=https://<app>/tv`, poi abbina la TV da *Casa → Abbina una TV*.
+1. **Autorizzati a creare la casa:** nel Table Editor di Supabase, tabella `signup_allowlist`, aggiungi la tua email (in minuscolo) con `can_create_household` attivo.
+2. **Sul telefono:** apri l'app, accedi, crea la casa, e da *Casa → Aggiungi una persona* aggiungi gli altri con la loro email.
+3. **Su iPhone:** *Condividi → Aggiungi alla schermata Home*. Le notifiche web su iOS arrivano solo così.
+4. **Notifiche:** attivale in *Casa*.
+5. **Raspberry:** segui [`device/README.md`](device/README.md), con `TV_URL=https://<app>/tv`, poi abbina la TV da *Casa → Abbina una TV*.
 
 Sul piano gratuito il progetto Supabase si ferma dopo 7 giorni senza attività. Il battito della TV, una richiesta al minuto, dovrebbe bastare a tenerlo attivo: da verificare nella prima settimana. Se non basta, si aggiunge un keepalive.
 
