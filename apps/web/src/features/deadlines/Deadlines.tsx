@@ -6,15 +6,21 @@ import { describe, zonedDate } from "@shared/recurrence";
 import { supabase } from "@/lib/supabase";
 import { useRows } from "@/lib/useRows";
 import Big from "@/components/dash/Big";
+import MonthDots from "@/components/dash/MonthDots";
 import TickRuler from "@/components/dash/TickRuler";
 import Button from "@/components/ui/Button";
 import Dialog from "@/components/ui/Dialog";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
+import Section from "@/components/ui/Section";
 import DeadlineForm from "./DeadlineForm";
 import { categoryLabel, daysWord, nextDue, open, recurrenceOf, shortDate, whenLabel, type Deadline } from "./due";
 
 const two = (n: number) => String(Math.abs(n)).padStart(2, "0");
+const toDate = (day: string) => {
+  const [y, m, d] = day.split("-").map(Number) as [number, number, number];
+  return new Date(y, m - 1, d);
+};
 
 export default function Deadlines({ householdId, tz }: { householdId: string; tz: string }) {
   const { rows, error, setError, reload } = useRows<Deadline>("deadlines", householdId);
@@ -32,10 +38,10 @@ export default function Deadlines({ householdId, tz }: { householdId: string; tz
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-6 pb-32 lg:max-w-2xl">
+    <Section aside={<>
       <PageHeader title="Scadenze">
         <p className="flex items-end gap-3">
-          <Big className={`text-8xl ${first && first.daysLeft <= 7 ? "text-accent-text" : ""}`}>{first ? two(first.daysLeft) : "--"}</Big>
+          <Big className={`text-8xl lg:text-[10rem] ${first && first.daysLeft <= 7 ? "text-accent-text" : ""}`}>{first ? two(first.daysLeft) : "--"}</Big>
           <span className="pb-2 text-xl text-muted">{first ? daysWord(first.daysLeft) : "niente in scadenza"}</span>
         </p>
         {first && <p className="text-2xl font-semibold">{first.deadline.title}</p>}
@@ -46,6 +52,9 @@ export default function Deadlines({ householdId, tz }: { householdId: string; tz
         <Plus aria-hidden weight="bold" className="size-5" /> Nuova scadenza
       </Button>
       {error && <p role="alert" className="text-danger">Operazione non riuscita: {error}</p>}
+      <MonthDots today={toDate(today)} marked={todo.filter((t) => t.deadline.due_date.slice(0, 7) === today.slice(0, 7)).map((t) => Number(t.deadline.due_date.slice(8)))}
+        className="mt-4 hidden max-w-sm lg:grid" />
+      </>}>
 
       {rows && todo.length === 0 && (
         <EmptyState expression="serene" title="Nessuna scadenza">
@@ -94,6 +103,6 @@ export default function Deadlines({ householdId, tz }: { householdId: string; tz
             deadline={editing === "new" ? undefined : editing} onDone={() => { setEditing(null); void reload(); }} />
         )}
       </Dialog>
-    </main>
+    </Section>
   );
 }

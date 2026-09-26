@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import Dialog from "@/components/ui/Dialog";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
+import Section from "@/components/ui/Section";
 import ReminderForm from "./ReminderForm";
 import { dayLabel, hhmm, recurrenceOf, upcoming, type Reminder } from "./schedule";
 
@@ -24,10 +25,10 @@ export default function Reminders({ householdId, tz }: { householdId: string; tz
   const days = [...new Set(next.map((u) => u.day))];
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-6 pb-32 lg:max-w-2xl">
+    <Section aside={<>
       <PageHeader title="Promemoria">
         <p className="flex items-end gap-3">
-          <Big className="text-8xl">{first ? hhmm(first.reminder.at_time) : "--:--"}</Big>
+          <Big className="text-8xl lg:text-[10rem]">{first ? hhmm(first.reminder.at_time) : "--:--"}</Big>
           <span className="pb-2 text-xl text-muted">{first ? dayLabel(first.day, today, tomorrow).split(" ")[0]!.toLowerCase() : "niente in programma"}</span>
         </p>
         {first && <p className="text-2xl font-semibold">{first.reminder.title}</p>}
@@ -37,6 +38,7 @@ export default function Reminders({ householdId, tz }: { householdId: string; tz
         <Plus aria-hidden weight="bold" className="size-5" /> Nuovo promemoria
       </Button>
       {error && <p role="alert" className="text-danger">Non riesco a leggere i promemoria: {error}</p>}
+      </>}>
 
       {rows && next.length === 0 && (
         <EmptyState expression="sleepy" title="Nessun promemoria">
@@ -84,6 +86,6 @@ export default function Reminders({ householdId, tz }: { householdId: string; tz
             reminder={editing === "new" ? undefined : editing} onDone={() => { setEditing(null); void reload(); }} />
         )}
       </Dialog>
-    </main>
+    </Section>
   );
 }

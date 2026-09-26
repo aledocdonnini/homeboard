@@ -8,6 +8,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import Big from "@/components/dash/Big";
 import DotGrid from "@/components/dash/DotGrid";
 import PageHeader from "@/components/ui/PageHeader";
+import Section from "@/components/ui/Section";
 import { arrange, CATEGORIES, normalize, parseQuickAdd, suggest, type Item } from "./items";
 import { useShoppingList } from "./useShoppingList";
 import SortableGroup from "./SortableGroup";
@@ -39,11 +40,11 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
     setText("");
   }
 
-  return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-6 pb-32 lg:max-w-2xl">
+  const aside = (
+    <>
       <PageHeader title="Spesa">
         <p className="flex items-end gap-3">
-          <Big className="text-8xl">{list.loaded ? String(todo).padStart(2, "0") : "--"}</Big>
+          <Big className="text-8xl lg:text-[10rem]">{list.loaded ? String(todo).padStart(2, "0") : "--"}</Big>
           <span className="pb-2 text-xl text-muted">da prendere{checked.length ? `, ${checked.length} nel carrello` : ""}</span>
         </p>
         {total > 0 && <DotGrid filled={todo} total={total} cols={10} />}
@@ -80,7 +81,11 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
       </form>
 
       {list.error && <p role="alert" className="text-danger">Una modifica è stata rifiutata dal server: {list.error}</p>}
+    </>
+  );
 
+  return (
+    <Section aside={aside}>
       {!list.loaded ? (
         <div aria-hidden className="flex flex-col gap-3">
           {[60, 45, 70].map((w) => <div key={w} className="h-12 rounded-control bg-line/50" style={{ width: `${w}%` }} />)}
@@ -92,12 +97,15 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
             : "Scrivi qui sopra cosa manca. Puoi aggiungere più cose insieme, separate da virgole."}
         </EmptyState>
       ) : (
-        groups.map((g) => (
-          <section key={g.category} aria-labelledby={`cat-${g.category}`} className="flex flex-col">
-            <h2 id={`cat-${g.category}`} className="text-base font-semibold text-muted">{g.label}</h2>
-            <SortableGroup items={g.items} onMove={list.move} render={(item) => <Row item={item} list={list} />} />
-          </section>
-        ))
+        // Desktop: i reparti su due colonne, ognuno intero in una colonna.
+        <div className="flex flex-col gap-6 lg:block lg:columns-2 lg:gap-x-14">
+          {groups.map((g) => (
+            <section key={g.category} aria-labelledby={`cat-${g.category}`} className="flex break-inside-avoid flex-col lg:mb-8">
+              <h2 id={`cat-${g.category}`} className="text-base font-semibold text-muted">{g.label}</h2>
+              <SortableGroup items={g.items} onMove={list.move} render={(item) => <Row item={item} list={list} />} />
+            </section>
+          ))}
+        </div>
       )}
 
       {checked.length > 0 && (
@@ -111,7 +119,7 @@ export default function ShoppingList({ householdId }: { householdId: string }) {
           </ul>
         </section>
       )}
-    </main>
+    </Section>
   );
 }
 
@@ -119,7 +127,7 @@ function Row({ item, list }: { item: Item; list: ReturnType<typeof useShoppingLi
   return (
     <div className="flex min-h-14 items-center gap-3">
       <Checkbox id={`item-${item.id}`} checked={item.checked} onChange={(e) => list.setChecked(item.id, e.target.checked)} />
-      <label htmlFor={`item-${item.id}`} className={`flex-1 py-3 text-xl leading-snug font-medium ${item.checked ? "text-muted line-through font-normal" : ""}`}>
+      <label htmlFor={`item-${item.id}`} className={`flex-1 py-3 text-xl leading-snug font-medium lg:text-2xl ${item.checked ? "text-muted line-through font-normal" : ""}`}>
         {item.name}
       </label>
       {!item.checked && (

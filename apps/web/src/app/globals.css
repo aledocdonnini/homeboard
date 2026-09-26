@@ -144,3 +144,10 @@
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* Su desktop la navigazione è un pannello a sinistra: le pagine che lo hanno gli fanno spazio. */
+@media (min-width: 1024px) {
+  body:has(nav[data-rail]) {
+    padding-left: 7rem;
+  }
+}
