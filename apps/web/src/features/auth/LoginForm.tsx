@@ -48,7 +48,10 @@ export default function LoginForm() {
       options: { emailRedirectTo: `${location.origin}/accedi?next=${encodeURIComponent(nextPath())}` },
     });
     setBusy(false);
-    if (error) setError(`Email non inviata: ${error.message}`);
+    // 403 = l'hook "solo su invito" ha respinto un indirizzo che non è in elenco.
+    if (error) setError(error.status === 403
+      ? "Questo indirizzo non è stato invitato. Chiedi a chi gestisce la casa di aggiungerti."
+      : `Email non inviata: ${error.message}`);
     else setSent(true);
   }
 
