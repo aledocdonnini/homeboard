@@ -48,7 +48,7 @@ export default function Cruscotto({ data, tv = false, channel = 1, surprised = f
   return (
     <div className={`${tv ? "" : "crt "}min-h-[100dvh]`}>
       {/* ——— Schermi grandi: TV 1920×1280, desktop ——— */}
-      <main className="hidden h-[100dvh] grid-cols-12 gap-10 p-[calc(2.5rem+var(--overscan))] lg:grid">
+      <main className={`hidden h-[100dvh] grid-cols-12 gap-10 py-[calc(2.5rem+var(--overscan))] pl-[calc(2.5rem+var(--overscan))] lg:grid ${tv ? "pr-[calc(2.5rem+var(--overscan))]" : "pr-10"}`}>
         {shown === 1 && (
           <>
             <div className="col-span-3 flex flex-col justify-between">

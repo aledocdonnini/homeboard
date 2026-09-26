@@ -7,8 +7,9 @@ import RobyTile from "@/components/ui/RobyTile";
 
 // I tasti di preselezione del televisore. Il numero è il canale della TV che mostra la stessa cosa.
 // Telefono: una fila di tasti in basso, sotto il pollice; premuto = nero, come un tasto abbassato.
-// Desktop: una colonna di numeri, come il resto del cruscotto (niente riquadri, linee fra le voci);
+// Desktop: una colonna di numeri a destra, come il resto del cruscotto (niente riquadri, linee fra le voci);
 // il canale attivo ha il numero arancio, come l'OSD della TV. Casa in fondo, Roby in cima.
+// La colonna sta dentro la zona sicura (--overscan), come tutto il contenuto: la cornice non la copre.
 const TABS = [
   { href: "/", label: "Oggi", key: "1" },
   { href: "/spesa", label: "Spesa", key: "2" },
@@ -23,7 +24,7 @@ export default function TabBar() {
   return (
     <nav aria-label="Sezioni" data-rail
       className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper pb-[env(safe-area-inset-bottom)]
-        lg:inset-y-0 lg:right-auto lg:w-28 lg:border-t-0 lg:border-r lg:pb-0">
+        lg:inset-y-[var(--overscan)] lg:right-[var(--overscan)] lg:left-auto lg:w-28 lg:border-t-0 lg:border-l lg:bg-transparent lg:pb-0">
       <RobyTile expression="happy" className="mt-8 mb-2 ml-4 hidden size-12 lg:block" />
       <ul className="mx-auto grid max-w-lg grid-cols-5 gap-1.5 px-2 py-2
         lg:flex lg:h-[calc(100%-6rem)] lg:max-w-none lg:flex-col lg:gap-0 lg:px-4 lg:py-4">
