@@ -426,3 +426,22 @@ enabled = true
 # La chiama pg_cron con un segreto proprio (NOTIFY_SECRET), non con il JWT di un utente: il controllo è nel codice.
 [functions.notify]
 verify_jwt = false
+
+# ——— Produzione (progetto cloud): solo le differenze dal locale. `npx supabase config push` ———
+[remotes.production]
+project_id = "bjwmzfmbphbmdmrcxaap"
+
+[remotes.production.auth]
+site_url = "https://homeboard-puce.vercel.app"
+additional_redirect_urls = ["https://homeboard-puce.vercel.app/**"]
+
+[remotes.production.auth.email]
+# In locale 1 s per comodità; in produzione almeno un minuto fra due email alla stessa persona.
+max_frequency = "60s"
+# In produzione l'email si conferma (con il codice va da sé); in locale no, per fare prima.
+enable_confirmations = true
+
+# Il 2FA con app di autenticazione resta disponibile come da default del progetto.
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
