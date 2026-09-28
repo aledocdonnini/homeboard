@@ -7,8 +7,9 @@
 //   cercare da lì). La ricerca la fa brain, qui: funziona offline.
 // - Punteggio: somiglianza (coseno) più un piccolo premio per le parole in comune. Sotto la soglia: "non so".
 //   Senza modello (non ancora caricato, o mancante) restano le sole parole.
-// - Risposta: la nota più pertinente con data e origine ("Il 12 marzo mi hai detto: …"). In fase 8 un modello
-//   linguistico potrà rispondere con parole sue, dietro l'interfaccia Answerer, citando sempre la nota.
+// - Risposta: la nota più pertinente con data e origine ("Il 12 marzo mi hai detto: …"). Con un modello linguistico
+//   configurato e autorizzato per le note (ROBY_LLM, packages/intents/src/llm.ts), risponde lui con parole sue
+//   basandosi solo sulle note trovate, e Roby aggiunge sempre da quale nota viene ("Me l'hai detto il 12 marzo.").
 
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
@@ -73,8 +74,13 @@ export type Found = { note: Row; score: number };
 
 /** La nota più pertinente, o null se nessuna supera la soglia. */
 export async function search(store: Store, question: string, embedder: Embedder | null): Promise<Found | null> {
+  return (await rank(store, question, embedder))[0] ?? null;
+}
+
+/** Le note sopra la soglia, dalla più pertinente. */
+export async function rank(store: Store, question: string, embedder: Embedder | null): Promise<Found[]> {
   const notes = store.live("notes");
-  if (!notes.length) return null;
+  if (!notes.length) return [];
   const words = question.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 3 && !STOP.has(w));
   const hits = (n: Row) => words.filter((w) => sameThing(w, String(n.body))).length;
 
@@ -91,27 +97,33 @@ export async function search(store: Store, question: string, embedder: Embedder 
     const score = query && vector ? dot(query, vector) + WORD_BONUS * hits(note) : hits(note) > 0 ? THRESHOLD + WORD_BONUS * hits(note) : 0;
     return { note, score };
   }).sort((a, b) => b.score - a.score || String(b.note.created_at).localeCompare(String(a.note.created_at)));
-  const best = scored[0]!;
-  return best.score >= THRESHOLD ? best : null;
-}
-
-/** Livello di fase 8: un modello linguistico risponde basandosi solo sulle note trovate. Senza, si legge la nota. */
-export interface Answerer {
-  answer(question: string, notes: Row[]): Promise<string | null>;
+  return scored.filter((x) => x.score >= THRESHOLD);
 }
 
 const SAID: Record<string, string> = { voce: "mi hai detto", pwa: "hai scritto", share: "hai salvato" };
+
+/** "Oggi", "Ieri", "Il 12 marzo", "Il 2 novembre 2025": quando è stata presa la nota. */
+export function noteDay(note: Row, now: Date, timezone: string): string {
+  const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
+  const created = new Date(String(note.created_at));
+  if (day(created) === day(now)) return "Oggi";
+  if (day(created) === day(new Date(now.getTime() - 86_400_000))) return "Ieri";
+  return `Il ${created.toLocaleDateString("it-IT", { timeZone: timezone, day: "numeric", month: "long", ...(created.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) })}`;
+}
+
+/** Da dove viene una risposta scritta dal modello linguistico: "Me l'hai detto il 12 marzo." */
+export function origin(note: Row, now: Date, timezone: string): string {
+  const when = noteDay(note, now, timezone).toLowerCase();
+  const verb = ({ pwa: "L'hai scritto", share: "L'hai salvato" } as Record<string, string>)[String(note.source)] ?? "Me l'hai detto";
+  return `${verb} ${when}.`;
+}
 
 /**
  * "Il 12 marzo mi hai detto: la chiave di scorta è da mia madre." — sempre con data e origine.
  * Con `unsure` (punteggio fra THRESHOLD e SURE) Roby lo dice: "Forse intendi questo. Il 12 marzo…".
  */
 export function cite(note: Row, now: Date, timezone: string, unsure = false): string {
-  const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(d);
-  const created = new Date(String(note.created_at));
-  const when = day(created) === day(now) ? "Oggi"
-    : day(created) === day(new Date(now.getTime() - 86_400_000)) ? "Ieri"
-    : `Il ${created.toLocaleDateString("it-IT", { timeZone: timezone, day: "numeric", month: "long", ...(created.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) })}`;
+  const when = noteDay(note, now, timezone);
   const body = String(note.body).replace(/[.!?]*$/, "");
   return `${unsure ? "Forse intendi questo. " : ""}${when} ${SAID[String(note.source)] ?? "mi hai detto"}: ${body.charAt(0).toLowerCase()}${body.slice(1)}.`;
 }

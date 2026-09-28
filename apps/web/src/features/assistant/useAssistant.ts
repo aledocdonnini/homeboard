@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { addDays, describe, nextReminderAt, zonedDate } from "@homeboard/core/recurrence";
-import { DESTRUCTIVE, parse, sameThing, smalltalkReply, type Intent } from "@homeboard/intents";
+import { DESTRUCTIVE, Intent, parse, sameThing, smalltalkReply, type Context } from "@homeboard/intents";
 import { supabase } from "@/lib/supabase";
 import { nextDue, open, shortDate, whenLabel, type Deadline } from "@/features/deadlines/due";
 import { dayLabel } from "@/features/reminders/schedule";
@@ -20,6 +20,32 @@ type Deps = {
   timers: Timer[];
   reload: () => void;
 };
+
+/** false quando il server ha detto che il modello linguistico è spento (501): non si chiede più. */
+let llmAvailable = true;
+
+/**
+ * Frase non capita dalle regole: la si chiede al modello linguistico sul server (/api/interpreta), se c'è.
+ * La risposta si rivalida con lo schema anche qui. Senza rete o senza modello resta non capita.
+ */
+async function askServer(text: string, ctx: Context): Promise<Intent | null> {
+  if (!llmAvailable) return null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    const res = await fetch("/api/interpreta", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      body: JSON.stringify({ text, timezone: ctx.timezone, timers: ctx.timers, deadlines: ctx.deadlines }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.status === 501) llmAvailable = false;
+    if (!res.ok) return null;
+    const checked = Intent.safeParse(((await res.json()) as { intent?: unknown }).intent);
+    return checked.success && checked.data.type !== "unknown" ? checked.data : null;
+  } catch {
+    return null;
+  }
+}
 
 // "latte, uova e pane"
 const and = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs.at(-1)}`);
@@ -39,11 +65,22 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
     if (!text.trim()) return;
     const now = new Date(), today = zonedDate(now, tz);
     const openDeadlines = open(deadlines, today);
-    const intent = parse(text, {
+    const ctx: Context = {
       now, timezone: tz, bareIsShopping: true,
       deadlines: openDeadlines.map((d) => d.deadline.title),
       timers: timers.flatMap((t) => (t.label ? [t.label] : [])),
-    });
+    };
+    let intent = parse(text, ctx);
+    if (intent.type === "unknown" && !pending) {
+      setBusy(true);
+      const guessed = await askServer(text, ctx);
+      setBusy(false);
+      if (guessed) {
+        intent = guessed;
+        // Le regole non l'hanno capita: nel registro comunque, per migliorarle.
+        void supabase.from("unparsed_log").insert({ household_id: householdId, text: text.slice(0, 500), source: "pwa" }).then(() => {});
+      }
+    }
 
     if (pending) {
       setPending(null);

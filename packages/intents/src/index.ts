@@ -14,10 +14,11 @@ export * from "./schema.ts";
 export { parse };
 export { sameThing } from "./lexicon.ts";
 export { smalltalkReply, spokenTime } from "./smalltalk.ts";
+export { answerFromNotes, chatJson, interpretPrompt, llmFallback, llmFromEnv, type LlmConfig, type NoteForLlm } from "./llm.ts";
 
 /**
- * Livello 2: un modello linguistico dietro un'interfaccia. Implementazioni previste (config, fase 8):
- * none (predefinito), ollama in locale, un provider compatibile OpenAI (Groq, o uno a pagamento), Gemini.
+ * Livello 2: un modello linguistico dietro un'interfaccia. L'implementazione (llm.ts) copre Ollama in locale, Groq,
+ * Gemini, OpenAI e ogni provider compatibile, da configurazione (ROBY_LLM, predefinito none).
  * Restituisce JSON grezzo: lo valida interpret(), il modello non esegue mai niente.
  */
 export interface Fallback {

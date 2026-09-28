@@ -67,3 +67,32 @@ test("una domanda libera non capita trova la risposta nelle note", async () => {
   const miss = await execute(parse("fai il caffè", { now, timezone: "Europe/Rome" }), ctx);
   assert.equal(miss.reply, "Scusa, non ho capito.");
 });
+
+test("con un modello linguistico: risponde con parole sue, dalla nota, e dice da dove viene", async () => {
+  const { execute } = await import("./executor.ts");
+  const { Timers } = await import("./timers.ts");
+  const { llmFromEnv } = await import("@homeboard/intents");
+  const store = new Store();
+  store.receive("notes", [note("a", "Le batterie sono nel cassetto della cucina", "2026-09-28T08:00:00Z", "pwa")]);
+  await index(store, fake);
+  const now = new Date("2026-09-28T15:00:00Z");
+  const ctx = { store, timers: new Timers(store), householdId: "h", timezone: "Europe/Rome", now, embedder: fake, llm: llmFromEnv({ ROBY_LLM: "ollama" }) };
+  const ask = { type: "note.ask" as const, question: "Dove sono le pile" };
+  const real = globalThis.fetch;
+  const answer = (content: string | null) => {
+    globalThis.fetch = (async () => {
+      if (content === null) throw new Error("Ollama spento");
+      return new Response(JSON.stringify({ choices: [{ message: { content } }] }));
+    }) as unknown as typeof fetch;
+  };
+  try {
+    answer('{"risposta":"Sono nel cassetto della cucina.","nota":1}');
+    assert.equal((await execute(ask, ctx)).reply, "Sono nel cassetto della cucina. L'hai scritto oggi.");
+    answer('{"risposta":null,"nota":null}');
+    assert.equal((await execute(ask, ctx)).reply, "Non ho niente annotato su questo.", "il modello dice che la risposta non c'è");
+    answer(null);
+    assert.equal((await execute(ask, ctx)).reply, "Oggi hai scritto: le batterie sono nel cassetto della cucina.", "modello irraggiungibile: si legge la nota");
+  } finally {
+    globalThis.fetch = real;
+  }
+});

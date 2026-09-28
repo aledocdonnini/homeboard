@@ -231,7 +231,9 @@ function shopping(u: Utterance, ctx: Context): Intent | null {
   const notAList = /^(?:cosa|come|quando|dove|perche|chi|quanto|qual|che|fai|fammi|accendi|spegni|chiama|apri|chiudi|dimmi|dammi|mostra|cerca|leggi|manda|suona|alza|abbassa|cambia|vai|torna|racconta|canta|ciao|buongiorno|buonasera|grazie)\b/;
   if (ctx.bareIsShopping && t.split(" ").length <= 12 && !notAList.test(t)) {
     const list = items(u);
-    return list.length ? { type: "shopping.add", items: list } : null;
+    // Una "cosa da comprare" di più di quattro parole è una frase ("stasera finisce la farina, pensaci tu"):
+    // meglio non capita (e magari la capisce il modello linguistico) che una voce assurda in lista.
+    return list.length && list.every((i) => i.split(" ").length <= 4) ? { type: "shopping.add", items: list } : null;
   }
   return null;
 }

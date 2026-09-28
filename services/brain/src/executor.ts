@@ -6,9 +6,9 @@ import type { AnswerPanel } from "@homeboard/core/protocol";
 import { arrange, guessCategory, normalize, positionBetween, type Item, type Stat } from "@homeboard/core/items";
 import { addDays, daysBetween, describe, nextOccurrence, nextReminderAt, zonedDate, type PlainDate, type Recurrence } from "@homeboard/core/recurrence";
 import { secondsLeft, spoken } from "@homeboard/core/timers";
-import { sameThing, smalltalkReply, type Intent } from "@homeboard/intents";
+import { answerFromNotes, sameThing, smalltalkReply, type Intent, type LlmConfig } from "@homeboard/intents";
 import type { BrainOp, Row, Store } from "./store.ts";
-import { cite, search, SURE, type Embedder } from "./notes.ts";
+import { cite, noteDay, origin, rank, search, SURE, type Embedder } from "./notes.ts";
 import type { Timers } from "./timers.ts";
 
 export type Result = {
@@ -21,6 +21,8 @@ export type Ctx = {
   store: Store; timers: Timers; householdId: string; timezone: string; now: Date;
   /** Il modello per cercare le note per significato; null finché non è pronto (si cerca per parole). */
   embedder?: Embedder | null;
+  /** Un modello linguistico autorizzato per le note: risponde lui, basandosi solo sulle note trovate. */
+  llm?: LlmConfig | null;
 };
 
 const and = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs.at(-1)}`);
@@ -40,7 +42,7 @@ export const shoppingList = (store: Store) =>
 export const openDeadlines = (store: Store) =>
   store.live("deadlines").filter((d) => !d.done_at).sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
 
-export async function execute(intent: Intent, { store, timers, householdId, timezone, now, embedder = null }: Ctx): Promise<Result> {
+export async function execute(intent: Intent, { store, timers, householdId, timezone, now, embedder = null, llm = null }: Ctx): Promise<Result> {
   const today = zonedDate(now, timezone);
   const ops: BrainOp[] = [];
   const done = (r: Result) => {
@@ -153,10 +155,22 @@ export async function execute(intent: Intent, { store, timers, householdId, time
       return done({ reply: "Me lo ricordo.", panel: { kind: "note", body: intent.body } });
     }
     case "note.ask": {
-      const found = await search(store, intent.question, embedder);
-      return found
-        ? { reply: cite(found.note, now, timezone, found.score < SURE), panel: { kind: "note", body: String(found.note.body) } }
-        : { reply: "Non ho niente annotato su questo.", panel: { kind: "text" } };
+      const found = await rank(store, intent.question, embedder);
+      const best = found[0];
+      if (!best) return { reply: "Non ho niente annotato su questo.", panel: { kind: "text" } };
+      if (llm?.notes) {
+        // Il modello risponde solo dalle note trovate (le tre più pertinenti) e dice quale ha usato.
+        const top = found.slice(0, 3);
+        try {
+          const a = await answerFromNotes(llm, intent.question, top.map((f) => ({ body: String(f.note.body), date: noteDay(f.note, now, timezone) })));
+          if (!a) return { reply: "Non ho niente annotato su questo.", panel: { kind: "text" } };
+          const used = top[a.note]!.note;
+          return { reply: `${a.text} ${origin(used, now, timezone)}`, panel: { kind: "note", body: String(used.body) } };
+        } catch (e) {
+          console.warn("Modello linguistico non raggiungibile, leggo la nota:", (e as Error).message);
+        }
+      }
+      return { reply: cite(best.note, now, timezone, best.score < SURE), panel: { kind: "note", body: String(best.note.body) } };
     }
 
     case "smalltalk":

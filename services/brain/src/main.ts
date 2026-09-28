@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { AnswerPanel, BrainToVoice, ToHome, VoiceToBrain } from "@homeboard/core/protocol";
-import { DESTRUCTIVE, parse, type Intent } from "@homeboard/intents";
+import { DESTRUCTIVE, interpret, llmFallback, llmFromEnv, type Intent, type LlmConfig } from "@homeboard/intents";
 import { isNight } from "@homeboard/core/station";
 import { Cloud } from "./cloud.ts";
 import { execute, openDeadlines } from "./executor.ts";
@@ -39,6 +39,15 @@ const VOICE_SOCKET = env("VOICE_SOCKET", join(process.env.XDG_RUNTIME_DIR ?? "/t
  * Il comando lo imposta homeboard-brain.service (device/bin/screen.sh wake); sul Mac non c'è.
  */
 const SCREEN_WAKE = process.env.SCREEN_WAKE_CMD;
+/** Il modello linguistico, se configurato (ROBY_LLM): ripiego per le frasi non capite e risposte dalle note. */
+let llm: LlmConfig | null = null;
+try {
+  llm = llmFromEnv(process.env);
+  if (llm) console.log(`Modello linguistico: ${llm.provider} (${llm.model}), note ${llm.notes ? "sì" : "no"}${llm.local ? ", in locale" : ""}`);
+} catch (e) {
+  console.warn(`ROBY_LLM ignorato: ${(e as Error).message}`);
+}
+const fallback = llm ? llmFallback(llm) : undefined;
 /** Dopo "Confermi?" si aspetta un sì o un no per 20 secondi, poi si lascia perdere. */
 const CONFIRM_MS = 20_000;
 
@@ -131,12 +140,14 @@ async function hear(said: string) {
   live.activity = "thinking";
   redraw();
   const now = new Date();
-  const intent = parse(said, {
+  const { intent, by } = await interpret(said, {
     now, timezone: house.timezone,
     timers: timers.list.flatMap((t) => (t.label ? [t.label] : [])),
     deadlines: openDeadlines(store).map((d) => String(d.title)),
-  });
-  console.log(`→ ${JSON.stringify(intent)}`);
+  }, fallback);
+  console.log(`→ ${JSON.stringify(intent)}${by === "rules" ? "" : ` (da ${by})`}`);
+  // Le regole non l'hanno capita: anche se l'ha capita il modello, finisce nel registro per migliorarle.
+  if (by !== "rules") store.change([{ table: "unparsed_log", kind: "insert", itemId: randomUUID(), row: { household_id: house.id, text: said.slice(0, 500), source: "voce" } }]);
 
   let todo = intent;
   if (pending && pending.until > now.getTime() && (intent.type === "confirm" || intent.type === "cancel")) {
@@ -148,7 +159,7 @@ async function hear(said: string) {
     return answer(said, "Tolgo tutto dalla lista della spesa? Dimmi sì o no.", { kind: "text" }, true);
   }
   pending = null;
-  const result = await execute(todo, { store, timers, householdId: house.id, timezone: house.timezone, now, embedder });
+  const result = await execute(todo, { store, timers, householdId: house.id, timezone: house.timezone, now, embedder, llm });
   answer(said, result.reply, result.panel);
   if (todo.type.startsWith("timer.")) {
     toVoice({ type: "alarm", on: timers.ringing }); // "basta": l'allarme si spegne subito

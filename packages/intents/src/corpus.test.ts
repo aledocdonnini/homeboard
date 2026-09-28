@@ -214,6 +214,8 @@ const CORPUS: [string, Intent, Partial<Context>?][] = [
   ["fai il caffè", unknown("fai il caffè"), { bareIsShopping: true }],
   ["accendi la luce", unknown("accendi la luce"), { bareIsShopping: true }],
   ["pane integrale", add("Pane integrale"), { bareIsShopping: true }],
+  ["detersivo per i piatti, latte", add("Detersivo per i piatti", "Latte"), { bareIsShopping: true }],
+  ["stasera finisce la farina di riso, pensaci tu", unknown("stasera finisce la farina di riso, pensaci tu"), { bareIsShopping: true }],
   ["ricordami domani alle 9 di chiamare Anna", remind("Chiamare Anna", "2026-09-29", "09:00"), { bareIsShopping: true }],
 ];
 

@@ -136,6 +136,9 @@ npm run dev                                                       # la PWA su ht
 | Edge Function (`supabase secrets` e `supabase/functions/.env`) | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | coppia VAPID |
 | | `VAPID_SUBJECT` | `mailto:` di contatto per i servizi push |
 | | `NOTIFY_SECRET` | segreto con cui pg_cron chiama la funzione |
+| PWA, solo lato server (Vercel), facoltative | `ROBY_LLM`, `ROBY_LLM_MODEL`, `ROBY_LLM_KEY`, `ROBY_LLM_URL` | modello linguistico per le frasi non capite (sezione qui sotto); senza, è spento |
+| Raspberry (`~/.config/homeboard/homeboard.env`) | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | le stesse chiavi pubbliche della PWA, per `brain` |
+| | `ROBY_*` | voce, microfono, tasti, modello linguistico: vedi `device/homeboard.env.example` |
 | Database (Vault) | `notify_url` | indirizzo della funzione `notify` |
 | | `notify_secret` | lo stesso valore di `NOTIFY_SECRET` |
 
@@ -182,11 +185,33 @@ Importa il repository, con **Root Directory** `apps/web` (il workspace npm si in
 
 Sul piano gratuito il progetto Supabase si ferma dopo 7 giorni senza attività. Il battito della TV, una richiesta al minuto, dovrebbe bastare a tenerlo attivo: da verificare nella prima settimana. Se non basta, si aggiunge un keepalive.
 
+## Modello linguistico (opzionale)
+
+Le regole di `packages/intents` capiscono la grande maggioranza delle frasi, in un istante e senza rete. Per quelle che non capiscono si può aggiungere un modello linguistico, che di default è **spento**. Una sola implementazione (`packages/intents/src/llm.ts`) copre tutti i provider "compatibili OpenAI", scelti con variabili d'ambiente:
+
+| `ROBY_LLM` | Dove gira | Costo | Note |
+|---|---|---|---|
+| `none` (predefinito) | | | solo le regole |
+| `ollama` | in casa: sul Pi, o su un computer della rete (`ROBY_LLM_URL=http://192.168.x.x:11434/v1`) | gratis | niente esce di casa; sul Pi 5 un modello da 3B è lento (secondi), meglio un computer più potente |
+| `groq`, `gemini` | cloud | piano gratuito | serve `ROBY_LLM_KEY` |
+| `openai`, `custom` | cloud o dove vuoi | a pagamento o altro | `custom` vuole `ROBY_LLM_URL` e `ROBY_LLM_MODEL` |
+
+- **Cosa fa.**
+  - Se le regole non capiscono una frase, il modello la trasforma in un intento. La risposta passa dallo stesso schema: il modello non esegue mai niente, e se sbaglia formato la frase resta "non capita".
+  - Nelle note, risponde con parole sue basandosi solo sulle note trovate, e Roby dice sempre da quale nota viene ("Me l'hai detto il 12 marzo."). Se nelle note la risposta non c'è, lo dice: niente invenzioni.
+- **Cosa esce di casa.**
+  - Per interpretare: solo la frase non capita, più ora, fuso e nomi di timer e scadenze.
+  - Per rispondere dalle note: la domanda e il testo delle note trovate. Per questo succede solo con un modello in rete di casa, a meno di dare il permesso esplicito con `ROBY_LLM_NOTES=si`.
+- **Dove si imposta.** Sul Pi, in `homeboard.env`, e lo usa `brain`. Per la PWA, nelle variabili d'ambiente di Vercel, **lato server**: la route `/api/interpreta` risponde solo a chi ha una sessione, e il telefono non vede mai la chiave. La PWA non manda mai le note al modello.
+- **Tempi.** Il modello si chiama solo per le frasi non capite. Se non risponde entro 6 secondi, la frase resta non capita. Le frasi non capite dalle regole restano comunque nel registro (`unparsed_log`), per migliorarle.
+
 ## Roby
 
 Il volto è un pacchetto a sé, [`packages/roby-face`](packages/roby-face). Si usa con `<roby-face expression="happy">`, `speak()` con la voce del browser o un endpoint audio, e gli eventi di inizio e fine parlato. Non ha dipendenze e si può usare in qualsiasi sito. Il motore viene da [Roby](https://roby-bot.vercel.app).
 
 ## Prossimi passi
 
-- [Input vocale](docs/input-vocale.md): progettato, da implementare. Si parte dall'aggiunta in linguaggio naturale ("latte e uova domani"), che serve anche senza microfono.
-- Roby come prodotto a sé: temi e integrazione in chatbot e siti. Licenza da decidere prima di pubblicarlo su npm.
+- **Il Raspberry vero.** Installazione e tarature da `device/README.md`: audio HDMI, microfono, policy di Chromium, misure di Kokoro e Vosk sul Pi.
+- **"Ehi Roby".** Addestrare la parola di attivazione (guida in `services/voice/README.md`); per ora è "Hey Jarvis".
+- **Email di accesso.** Un SMTP proprio (Resend) per il codice via email anche su iOS e per chi non è nel team Supabase.
+- **Roby come prodotto a sé.** Temi e integrazione in chatbot e siti. La licenza va decisa prima di pubblicarlo su npm.

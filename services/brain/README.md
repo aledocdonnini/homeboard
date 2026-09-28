@@ -47,11 +47,11 @@ Test: `npm test` dalla radice (copia locale ed esecutore, su SQLite in memoria).
   - Sotto 0,45: "Non ho niente annotato su questo".
   - Fra 0,45 e 0,6: Roby risponde, ma con "Forse intendi questo".
   - Senza modello: si cerca solo per parole.
-- **Risposta.** È la nota stessa, con data e origine: "Il 12 marzo mi hai detto: …", "Ieri hai scritto: …", "Oggi hai salvato: …" (dal telefono, con Condividi). Nella Fase 8 un modello linguistico potrà rispondere con parole sue, basandosi solo sulle note trovate e citandole: l'interfaccia è `Answerer`.
+- **Risposta.** Di norma è la nota stessa, con data e origine: "Il 12 marzo mi hai detto: …", "Ieri hai scritto: …", "Oggi hai salvato: …" (dal telefono, con Condividi). Con un modello linguistico autorizzato per le note (`ROBY_LLM`, README principale) risponde lui con parole sue, usando solo le tre note più pertinenti, e Roby aggiunge da dove viene la risposta: "Me l'hai detto il 12 marzo.".
 - **Domande libere.** Una frase che le regole non capiscono, per esempio "cosa mi serve per il tiramisù?", si cerca comunque fra le note prima di rispondere "non ho capito".
 - **Valutazione.** `npm run eval:note -w @homeboard/brain` gira col modello vero su note e domande di casa: 14 risposte giuste su 16.
   - "Quando scade la patente?" trova la garanzia della lavatrice, ma la dice con "forse".
-  - "Dove ho messo il caricabatterie?" trova le batterie con sicurezza. È un limite del modello piccolo.
+  - "Dove ho messo il caricabatterie?" trova le batterie con sicurezza. È un limite del modello piccolo; un modello linguistico, se c'è, risponde che nelle note non c'è.
 
 La PWA non calcola embedding: servirebbero 120 MB sul telefono. Lì la ricerca resta per parole, sul server (full-text in italiano).
 
