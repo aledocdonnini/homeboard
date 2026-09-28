@@ -26,6 +26,9 @@ Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
   - **funziona offline**: le modifiche vanno in coda e partono al ritorno della rete, con conflitti risolti da regole semplici e documentate.
 - **Promemoria:** data e ora, ripetizioni giornaliere, settimanali (anche con giorni scelti), mensili, annuali o personalizzate. La notifica arriva all'ora giusta, anche con l'app chiusa.
 - **Scadenze:** bollette, bollo, revisione, assicurazioni. Ripetizioni a mesi o anni (ogni 2 anni per la revisione) e avvisi in anticipo scelti per ognuna. "Fatta" apre da sola la scadenza successiva.
+- **Timer:** li mette e li ferma Roby a voce, a casa; nel telefono si vede quanto manca, e se Roby non si sente da qualche minuto l'app lo dice.
+- **Note:** le cose da ritrovare ("la chiave di scorta è da mia madre"), scritte qui o dette a Roby. Si cercano per parole anche offline; a Roby si chiede "dove sta la chiave di scorta?".
+- **Premi e parla:** il tasto del microfono accanto al campo usa il riconoscimento vocale del browser (Chrome su Android, Safari su iOS) e passa dallo stesso interprete.
 - **Casa condivisa, solo su invito:** la casa la crea chi è autorizzato, e il proprietario aggiunge le persone con la loro email (entrano da sole al primo accesso). Chi non è in elenco non può registrarsi. I televisori si abbinano con un codice.
 - **TV:**
   - sei canali sui sei tasti originali: cruscotto, spesa, promemoria, scadenze, monoscopio, Roby;

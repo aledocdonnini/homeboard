@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { nextDue, open, shortDate, whenLabel, type Deadline } from "@/features/deadlines/due";
 import { dayLabel } from "@/features/reminders/schedule";
 import type { useShoppingList } from "@/features/shopping/useShoppingList";
+import type { Timer } from "@/features/timers/useTimers";
+import { secondsLeft, spoken } from "@homeboard/core/timers";
 
 export type Reply = { text: string; href?: string; tone?: "ok" | "question" | "error" };
 
@@ -15,6 +17,7 @@ type Deps = {
   tz: string;
   list: ReturnType<typeof useShoppingList>;
   deadlines: Deadline[];
+  timers: Timer[];
   reload: () => void;
 };
 
@@ -27,7 +30,7 @@ const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
  * della PWA. La spesa funziona anche offline (coda); promemoria, scadenze e note chiedono la rete.
  * Le azioni distruttive aspettano un "sì".
  */
-export function useAssistant({ householdId, tz, list, deadlines, reload }: Deps) {
+export function useAssistant({ householdId, tz, list, deadlines, timers, reload }: Deps) {
   const [reply, setReply] = useState<Reply | null>(null);
   const [pending, setPending] = useState<Intent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,7 +39,11 @@ export function useAssistant({ householdId, tz, list, deadlines, reload }: Deps)
     if (!text.trim()) return;
     const now = new Date(), today = zonedDate(now, tz);
     const openDeadlines = open(deadlines, today);
-    const intent = parse(text, { now, timezone: tz, deadlines: openDeadlines.map((d) => d.deadline.title), bareIsShopping: true });
+    const intent = parse(text, {
+      now, timezone: tz, bareIsShopping: true,
+      deadlines: openDeadlines.map((d) => d.deadline.title),
+      timers: timers.flatMap((t) => (t.label ? [t.label] : [])),
+    });
 
     if (pending) {
       setPending(null);
@@ -77,8 +84,17 @@ export function useAssistant({ householdId, tz, list, deadlines, reload }: Deps)
           list.clearAll();
           return { text: "Fatto: la lista è vuota.", href: "/spesa" };
 
-        case "timer.start": case "timer.query": case "timer.stop":
-          return { text: "I timer li tiene Roby, a casa: chiediglielo a voce." };
+        case "timer.query": {
+          // Si leggono dalla copia in Supabase; metterli e fermarli resta a Roby, che suona in casa.
+          const found = intent.label ? timers.filter((t) => t.label && sameThing(intent.label!, t.label)) : timers;
+          if (!found.length) return { text: intent.label ? `Nessun timer "${intent.label}".` : "Nessun timer attivo.", href: "/timer" };
+          return {
+            text: found.map((t) => `${t.label ? `${t.label[0]!.toUpperCase()}${t.label.slice(1)}` : "Timer"}: ${t.status === "ringing" ? "sta suonando" : `mancano ${spoken(secondsLeft(t.ends_at, now))}`}`).join(". ") + ".",
+            href: "/timer",
+          };
+        }
+        case "timer.start": case "timer.stop":
+          return { text: "I timer li mette e li ferma Roby, a casa: diglielo a voce. Qui vedi quanto manca.", href: "/timer" };
 
         case "reminder.create": {
           const recurrence = intent.recurrence ?? null;

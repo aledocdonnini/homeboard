@@ -5,7 +5,7 @@ import { isNewer } from "@homeboard/core/sync";
 import { supabase } from "./supabase";
 
 type Row = { id: string; updated_at: string; deleted_at: string | null };
-type Table = "reminders" | "deadlines";
+type Table = "reminders" | "deadlines" | "notes";
 
 // Righe di una tabella della casa: lettura, realtime e una copia sul dispositivo per consultarle offline.
 // ponytail: le modifiche qui sono solo online (la coda offline serve alla spesa); se servirà, stessa strada di engine.ts.

@@ -2,9 +2,10 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, Microphone } from "@phosphor-icons/react";
 import Button from "@/components/ui/Button";
 import type { useAssistant } from "./useAssistant";
+import { useDictation } from "./useDictation";
 
 // Il campo unico: si scrive come si parlerebbe a Roby ("latte e uova", "ricordami domani alle 9 di…").
 // `replyHere`: sul telefono la risposta sta sotto il campo; su desktop la dice Roby nel suo riquadro.
@@ -12,6 +13,7 @@ export default function Ask({ assistant, replyHere = true }: { assistant: Return
   const [text, setText] = useState("");
   const id = useId();
   const { reply, busy, ask } = assistant;
+  const voice = useDictation({ onPartial: setText, onFinal: (said) => { setText(""); void ask(said); } });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,10 +31,19 @@ export default function Ask({ assistant, replyHere = true }: { assistant: Return
           placeholder="Latte e uova, ricordami domani alle 9 di…"
           className="min-h-12 min-w-0 flex-1 rounded-control border border-edge bg-surface px-4 text-lg"
         />
+        {voice.supported && (
+          <Button type="button" variant="quiet" onClick={voice.listening ? voice.stop : voice.start} aria-pressed={voice.listening}
+            aria-label={voice.listening ? "Smetti di ascoltare" : "Premi e parla"}
+            className="px-4 aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent">
+            <Microphone aria-hidden weight={voice.listening ? "fill" : "bold"} className="size-5" />
+          </Button>
+        )}
         <Button type="submit" disabled={!text.trim() || busy} aria-label="Invia" className="px-4">
           <ArrowRight aria-hidden weight="bold" className="size-5" />
         </Button>
       </div>
+      {voice.listening && <p role="status" className="text-muted">Ti ascolto…</p>}
+      {voice.error && <p role="alert" className="text-muted">{voice.error}</p>}
       {replyHere && reply && (
         <p role="status" className={`text-lg leading-snug ${reply.tone === "error" ? "text-muted" : ""}`}>
           {reply.text}
