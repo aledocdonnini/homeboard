@@ -1,10 +1,10 @@
 """Sintesi vocale, una frase alla volta: la prima esce prima che l'ultima sia pronta.
 Tre motori scelti da configurazione (ROBY_TTS):
-- edge (predefinito): voci neurali Microsoft (it-IT-DiegoNeural), le migliori in italiano. Servono internet e
-  un servizio gratuito ma non ufficiale; il testo della risposta (mai l'audio del microfono) va a Microsoft.
-  Le frasi già dette restano in cache sul Pi; senza rete, o se Edge non risponde, parla Kokoro.
-- kokoro: in locale, voce italiana naturale (im_nicola, if_sara), più lenta di Piper;
-- piper: in locale, velocissima anche sul Pi, voce meno riuscita.
+- kokoro (predefinito): in locale, voce italiana naturale (im_nicola, if_sara), più lenta di Piper;
+- piper: in locale, velocissima anche sul Pi, voce meno riuscita;
+- edge, solo se scelto: voci neurali Microsoft (it-IT-DiegoNeural), le migliori in italiano, ma il testo di ogni
+  risposta (note, spesa, promemoria) va a Microsoft, su un servizio gratuito e non ufficiale. L'audio del
+  microfono no. Frasi già dette in cache; senza rete, o se Edge non risponde, parla Kokoro.
 Misure: python -m roby_voice.bench --voci
 """
 

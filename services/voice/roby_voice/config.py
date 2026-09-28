@@ -18,8 +18,9 @@ class Config:
     vosk_model: str = field(default_factory=lambda: _env("ROBY_VOSK_MODEL", "vosk-model-small-it-0.22"))
     whisper_model: str = field(default_factory=lambda: _env("ROBY_WHISPER_MODEL", "small"))
     cache: Path = field(default_factory=lambda: Path(_env("ROBY_CACHE", str(Path.home() / ".cache/roby"))).expanduser())
-    # Sintesi: "edge" (voci Microsoft, serve internet; senza, parla la riserva), "kokoro" o "piper" (in locale).
-    tts: str = field(default_factory=lambda: _env("ROBY_TTS", "edge"))
+    # Sintesi: "kokoro" (predefinito) o "piper", in locale. "edge" (voci Microsoft) solo se scelto: manda a
+    # Microsoft il testo delle risposte, che contiene note, spesa, promemoria. Vedi README.
+    tts: str = field(default_factory=lambda: _env("ROBY_TTS", "kokoro"))
     tts_fallback: str = field(default_factory=lambda: _env("ROBY_TTS_FALLBACK", "kokoro"))
     edge_voice: str = field(default_factory=lambda: _env("ROBY_EDGE_VOICE", "it-IT-DiegoNeural"))
     edge_rate: str = field(default_factory=lambda: _env("ROBY_EDGE_RATE", "+0%"))

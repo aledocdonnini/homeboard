@@ -35,7 +35,7 @@ roby-voice                              # microfono e altoparlante veri; brain d
 
 Configurazione con variabili d'ambiente (`roby_voice/config.py`):
 - `ROBY_STT=vosk|whisper`;
-- `ROBY_TTS=edge|kokoro|piper`;
+- `ROBY_TTS=kokoro|piper|edge`;
 - `ROBY_EDGE_VOICE`, `ROBY_EDGE_RATE`;
 - `ROBY_TTS_FALLBACK=kokoro|none`;
 - `ROBY_KOKORO_VOICE=im_nicola|if_sara`, `ROBY_KOKORO_SPEED`;
@@ -75,15 +75,15 @@ Con `ROBY_DEBUG=1`, `voice` stampa ogni secondo il picco del microfono e il punt
 
 Le voci le abbiamo scelte a orecchio, sulle stesse frasi (i file si rigenerano con `bench --voci`).
 
-- **Edge TTS, voce Diego (predefinita).** Sono le voci neurali Microsoft, di gran lunga le più naturali in italiano; Giuseppe piaceva di più, ma è quasi il doppio più lento.
-  - Il servizio è gratuito ma non ufficiale, e serve internet.
-  - Il testo delle risposte va a Microsoft. L'audio del microfono no: quello non lascia mai il Pi.
-  - Ogni frase detta resta in cache (`~/.cache/roby/tts`): la seconda volta parte subito, anche senza rete.
-  - Se la rete manca, o Edge non risponde entro 3 s, quella frase la dice Kokoro. Hanno la stessa frequenza (24 kHz), quindi possono alternarsi in una risposta.
-- **Kokoro (82M parametri, licenza Apache 2.0).** Tutto in locale, voci italiane Nicola e Sara. Buona qualità, più lento di Piper.
-- **Piper.** In locale, velocissimo, voce meno riuscita.
+- **Kokoro, voce Nicola (predefinita).** Kokoro ha 82M parametri e licenza Apache 2.0. Tutto in locale; l'alternativa femminile è Sara (`if_sara`).
+- **Piper.** In locale, velocissimo, voce meno riuscita. Buono come riserva se Kokoro fosse troppo lento sul Pi.
+- **Edge TTS, solo se lo scegli** (`ROBY_TTS=edge`, `pip install -e ".[edge]"`). Sono le voci neurali Microsoft (Diego, Giuseppe…), di gran lunga le più naturali in italiano. Non è il predefinito per scelta:
+  - Il testo di ogni risposta va a Microsoft, e le risposte contengono i dati di casa: "Mi hai detto: la chiave di scorta è da mia madre", la lista della spesa, i promemoria.
+  - È un servizio gratuito ma non ufficiale, senza condizioni proprie.
+  - L'audio del microfono e le domande restano comunque in casa.
+  - Le frasi già dette vanno in cache (`~/.cache/roby/tts`). Senza rete parla Kokoro.
 
-Misure con `python -m roby_voice.bench --voci`, su 6 risposte tipiche. Edge alla prima richiesta, senza cache.
+Misure con `python -m roby_voice.bench --voci` (più `--edge` per Edge), su 6 risposte tipiche. Edge è misurato alla prima richiesta, senza cache.
 
 | voce | carica | prima frase | RTF |
 |---|---|---|---|

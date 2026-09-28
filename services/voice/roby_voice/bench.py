@@ -4,7 +4,7 @@
     python -m roby_voice.bench --registra            registra dal microfono le frasi di bench/frasi.txt (sul Pi)
     python -m roby_voice.bench --dir registrate      misura sulle registrazioni vere
     --motori vosk,whisper-small,whisper-base          quali motori (predefiniti: vosk e whisper-small)
-    python -m roby_voice.bench --voci                sintesi: Piper, Kokoro ed Edge sulle risposte tipiche di Roby
+    python -m roby_voice.bench --voci [--edge]       sintesi: Piper e Kokoro (ed Edge, che manda le frasi a Microsoft)
 
 Per ogni motore: tempo di caricamento, latenza media e al 90° percentile, RTF (tempo di calcolo / durata
 dell'audio: sotto 1 è più veloce del parlato), WER medio e frasi trascritte senza errori.
@@ -113,11 +113,11 @@ REPLIES = [
 ]
 
 
-def voices(cfg: Config) -> None:
+def voices(cfg: Config, edge: bool = False) -> None:
     """Per ogni motore: caricamento, attesa prima che esca la prima frase, RTF sull'insieme."""
     from .tts import tts
     print(f"{'voce':<22}{'carica':>8}{'prima frase':>13}{'RTF':>7}")
-    for name in ("piper", "kokoro", "edge"):
+    for name in ["piper", "kokoro", *(["edge"] if edge else [])]:
         started = time.monotonic()
         engine = tts(cfg, name)
         load = time.monotonic() - started
@@ -143,10 +143,11 @@ def main() -> None:
     parser.add_argument("--dir", type=Path)
     parser.add_argument("--motori", default="vosk,whisper-small")
     parser.add_argument("--voci", action="store_true")
+    parser.add_argument("--edge", action="store_true", help="con --voci: anche Edge (manda le frasi a Microsoft)")
     args = parser.parse_args()
     cfg = Config()
     if args.voci:
-        return voices(cfg)
+        return voices(cfg, args.edge)
     if args.registra:
         return record(args.dir or HERE / "registrate")
     folder = args.dir
