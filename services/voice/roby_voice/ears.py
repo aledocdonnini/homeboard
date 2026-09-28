@@ -19,11 +19,13 @@ class Ears:
         self._wake = Model(wakeword_models=[name], inference_framework="onnx",
                            melspec_model_path=str(base / "melspectrogram.onnx"), embedding_model_path=str(base / "embedding_model.onnx"))
         self._vad = VAD(model_path=str(base / "silero_vad.onnx"))
+        self.last_scores: dict[str, float] = {}
 
     def wake(self, frame: Any) -> float:
         """Probabilità che in questo blocco (e nei precedenti) ci sia la parola di attivazione."""
         scores = self._wake.predict(frame)
-        return float(max(scores.values())) if scores else 0.0
+        self.last_scores = {k: float(v) for k, v in scores.items()}
+        return max(self.last_scores.values(), default=0.0)
 
     def speech(self, frame: Any) -> float:
         """Probabilità che in questo blocco qualcuno parli."""

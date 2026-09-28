@@ -12,7 +12,7 @@ import { WebSocketServer, type WebSocket } from "ws";
 import type { Answer, AnswerPanel, HomeState, ToHome } from "@homeboard/core/protocol";
 import { addDays, zonedDate, zonedInstant } from "@homeboard/core/recurrence";
 import { secondsLeft, spoken } from "@homeboard/core/timers";
-import { DESTRUCTIVE, parse, sameThing, type Intent } from "@homeboard/intents";
+import { DESTRUCTIVE, parse, sameThing, smalltalkReply, type Intent } from "@homeboard/intents";
 
 const PORT = Number(process.env.BRAIN_PORT ?? 8765);
 const TZ = "Europe/Rome";
@@ -174,6 +174,10 @@ async function run(intent: Intent, said: string, now: Date) {
       answer(said, reply, hit ? { kind: "note", body: hit } : { kind: "text" });
       break;
     }
+    case "smalltalk":
+      reply = smalltalkReply(intent.topic, now, TZ);
+      state.answer = null;
+      break;
     case "confirm": case "cancel":
       reply = "Non c'era niente da confermare.";
       answer(said, reply);

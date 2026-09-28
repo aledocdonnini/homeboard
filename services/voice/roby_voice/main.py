@@ -15,6 +15,7 @@ Uso: roby-voice                   microfono e altoparlante veri
 """
 
 import argparse
+import os
 import queue
 import time
 from pathlib import Path
@@ -27,7 +28,7 @@ from .endpoint import Endpoint
 from .keys import Keys
 from .link import Link
 from .stt import SttEngine, engine
-from .tts import Piper
+from .tts import Tts, tts
 
 State = Literal["idle", "listening", "waiting", "speaking"]
 # Con barge-in "vad": tanta voce di fila (240 ms) mentre Roby parla vuol dire che qualcuno lo interrompe.
@@ -38,7 +39,7 @@ class Voice:
     """La macchina a stati. Le dipendenze arrivano da fuori: nei test (tests/test_voice.py) sono finte."""
 
     def __init__(self, cfg: Config, events: "queue.Queue[tuple[Any, ...]]", link: Link, ears: Ears, stt: SttEngine,
-                 tts: Piper, speaker: Speaker, subito: bool = False) -> None:
+                 tts: Tts, speaker: Speaker, subito: bool = False) -> None:
         self.cfg, self.events, self.link, self.ears, self.stt, self.tts, self.speaker = cfg, events, link, ears, stt, tts, speaker
         self.state: State = "idle"
         self.muted = False
@@ -47,6 +48,9 @@ class Voice:
         self.saying: str | None = None
         self.listen_after = False
         self.barge = 0
+        # ROBY_DEBUG=1: ogni secondo volume del microfono e punteggio della parola, per tarare la soglia.
+        self.debug = os.environ.get("ROBY_DEBUG") == "1"
+        self._peak, self._best, self._count = 0, 0.0, 0
         if subito:
             self._listen("button", beep=False)
 
@@ -73,6 +77,16 @@ class Voice:
         self.speaker.stop()  # on_done manda "spoken" con interrupted=True
         self._listen("word", beep=False)
 
+    def _debug(self, samples: Any) -> None:
+        self._peak = max(self._peak, int(abs(samples.astype("int32")).max()))
+        if self.state in ("idle", "speaking"):
+            self._best = max(self._best, float(max(self.ears.last_scores.values(), default=0.0)))
+        self._count += 1
+        if self._count >= 12:  # ~1 s
+            bar = "█" * min(40, self._peak // 800)
+            print(f"[debug] {self.state:<9} picco {self._peak:>5} {bar:<40} parola {self._best:.2f}", flush=True)
+            self._peak, self._best, self._count = 0, 0.0, 0
+
     # ——— Eventi ———
 
     def on_audio(self, frame: bytes) -> None:
@@ -80,6 +94,8 @@ class Voice:
             return
         import numpy as np
         samples = np.frombuffer(frame, dtype=np.int16)
+        if self.debug:
+            self._debug(samples)
 
         if self.state == "listening":
             verdict = self.endpoint.push(frame, self.ears.speech(samples))
@@ -197,11 +213,11 @@ def main() -> None:
 
     cfg = Config()
     events: queue.Queue[tuple[Any, ...]] = queue.Queue()
-    voice = Voice(cfg, events, Link(cfg.socket, events), Ears(cfg), engine(cfg), Piper(cfg), Speaker(cfg.output_device, args.out), subito=args.subito)
+    voice = Voice(cfg, events, Link(cfg.socket, events), Ears(cfg), engine(cfg), tts(cfg), Speaker(cfg.output_device, args.out), subito=args.subito)
     source = WavMic(voice.events, args.wav) if args.wav else Mic(voice.events, cfg.input_device)
     Keys(cfg.keys_device, voice.events).start()
     source.start()
-    print(f"voice: {cfg.stt}, parola «{cfg.wake_model}», brain su {cfg.socket}", flush=True)
+    print(f"voice: {cfg.stt} + {cfg.tts}, parola «{cfg.wake_model}», brain su {cfg.socket}", flush=True)
     voice.run()
 
 

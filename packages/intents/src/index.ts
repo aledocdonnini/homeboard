@@ -13,6 +13,7 @@ import { parse } from "./rules.ts";
 export * from "./schema.ts";
 export { parse };
 export { sameThing } from "./lexicon.ts";
+export { smalltalkReply, spokenTime } from "./smalltalk.ts";
 
 /**
  * Livello 2: un modello linguistico dietro un'interfaccia. Implementazioni previste (config, fase 8):

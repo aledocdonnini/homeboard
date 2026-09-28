@@ -38,3 +38,9 @@ def test_troppo_lunga() -> None:
 def test_audio_senza_silenzio_finale() -> None:
     _, e = run([0.9] * 10 + [0.1] * 9)
     assert len(e.audio()) == (10 + 2) * len(F)
+
+
+def test_frasi_per_la_sintesi() -> None:
+    from roby_voice.tts import sentences
+    assert sentences("Aggiunti: latte e uova. Da prendere: pane!") == ["Aggiunti:", "latte e uova.", "Da prendere:", "pane!"]
+    assert sentences("Costa 10,5 euro.") == ["Costa 10,5 euro."]

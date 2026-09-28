@@ -17,6 +17,11 @@ class Config:
     stt: str = field(default_factory=lambda: _env("ROBY_STT", "vosk"))
     vosk_model: str = field(default_factory=lambda: _env("ROBY_VOSK_MODEL", "vosk-model-small-it-0.22"))
     whisper_model: str = field(default_factory=lambda: _env("ROBY_WHISPER_MODEL", "small"))
+    # Sintesi: "kokoro" (voce più naturale, predefinita) o "piper" (più veloce). Misure in README.
+    tts: str = field(default_factory=lambda: _env("ROBY_TTS", "kokoro"))
+    kokoro_voice: str = field(default_factory=lambda: _env("ROBY_KOKORO_VOICE", "if_sara"))
+    kokoro_model: str = field(default_factory=lambda: _env("ROBY_KOKORO_MODEL", "kokoro-v1.0.onnx"))
+    kokoro_speed: float = field(default_factory=lambda: float(_env("ROBY_KOKORO_SPEED", "1.0")))
     piper_voice: str = field(default_factory=lambda: _env("ROBY_PIPER_VOICE", "it_IT-paola-medium"))
     # Parola di attivazione: "ehi_roby" quando c'è il modello addestrato (README), finché no "hey_jarvis".
     wake_model: str = field(default_factory=lambda: _env("ROBY_WAKE_MODEL", "hey_jarvis"))

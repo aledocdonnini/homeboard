@@ -13,6 +13,7 @@ class FakeEars:
     def __init__(self) -> None:
         self.wake_next = 0.0
         self.speech_next = 0.0
+        self.last_scores: dict[str, float] = {}
 
     def wake(self, _: Any) -> float:
         return self.wake_next

@@ -16,3 +16,4 @@ __pycache__/
 .pytest_cache/
 services/voice/bench/registrate/
 *.egg-info/
+services/voice/bench/voci/

@@ -14,12 +14,13 @@ riposo ──"Ehi Roby" o tasto──▶ ascolto ──fine frase (VAD)──▶
 | `roby_voice/ears.py` | parola di attivazione (openWakeWord) e voce sì/no (Silero VAD) |
 | `roby_voice/endpoint.py` | quando hai finito di parlare (logica pura, testata) |
 | `roby_voice/stt.py` | trascrizione: `SttEngine` con Vosk e faster-whisper |
-| `roby_voice/tts.py` | sintesi con Piper, voce italiana |
+| `roby_voice/tts.py` | sintesi, una frase alla volta: Kokoro (predefinito) o Piper |
 | `roby_voice/audio.py` | microfono, altoparlante interrompibile con il volume per la bocca, bip e allarme |
 | `roby_voice/link.py` | il filo con `brain` (socket Unix, JSON a righe; messaggi in `protocol.py`) |
 | `roby_voice/keys.py` | i tasti del televisore via gpio-key (`/dev/input`, libreria standard) |
 | `roby_voice/fetch.py` | scarica i modelli, una volta sola |
-| `roby_voice/bench.py` | misura latenza e precisione dei motori di trascrizione |
+| `roby_voice/bench.py` | misura latenza e precisione della trascrizione, e velocità della sintesi |
+| `roby_voice/mics.py` | quale microfono sente davvero (picco per ogni ingresso) |
 
 ## Avvio
 
@@ -34,6 +35,7 @@ roby-voice                              # microfono e altoparlante veri; brain d
 
 Configurazione con variabili d'ambiente (`roby_voice/config.py`):
 - `ROBY_STT=vosk|whisper`;
+- `ROBY_TTS=kokoro|piper`, con `ROBY_KOKORO_VOICE=if_sara|im_nicola` e `ROBY_KOKORO_SPEED`;
 - `ROBY_WAKE_MODEL`, `ROBY_WAKE_THRESHOLD`;
 - `ROBY_BARGE_IN=wake|vad`;
 - `ROBY_INPUT_DEVICE` e `ROBY_OUTPUT_DEVICE`;
@@ -60,7 +62,24 @@ docker run --rm -v "$PWD":/src -v roby-models:/models -e VOICE_SOCKET=tcp://host
 - **"Confermi?"** Dopo una domanda di `brain` (per esempio "Tolgo tutto?") si ascolta la risposta senza parola di attivazione.
 - **Allarme dei timer.** Suona finché `brain` non lo spegne. Intanto basta parlare ("basta!"), senza "Ehi Roby".
 
-## Misure
+## Microfono
+
+`python -m roby_voice.mics` registra un secondo e mezzo da ogni ingresso e stampa il picco. Il nome di quello che sente va in `ROBY_INPUT_DEVICE`. Picco 0 vuol dire silenzio "finto": su macOS manca il permesso del microfono per il Terminale, oppure il MacBook è chiuso e il microfono interno è spento.
+
+Con `ROBY_DEBUG=1`, `voice` stampa ogni secondo il picco del microfono e il punteggio della parola di attivazione: serve a tarare `ROBY_WAKE_THRESHOLD`.
+
+## Voce di Roby
+
+Kokoro (82M parametri, licenza Apache 2.0) ha voci italiane molto più naturali di Piper; Piper però è molto più veloce. Il confronto l'abbiamo fatto a orecchio sulle stesse frasi, e ha vinto Kokoro `if_sara`. Misure con `python -m roby_voice.bench --voci`, su 6 risposte tipiche:
+
+| voce | carica | prima frase | RTF |
+|---|---|---|---|
+| Piper `it_IT-paola-medium` | 0,5 s | 46–66 ms | 0,02 |
+| Kokoro `if_sara`, fp32 | 0,4–0,6 s | 226–255 ms | 0,13 |
+
+I numeri sono misurati sul Mac M-series, in nativo e in Docker Linux arm64. Sul Pi 5 ci si aspetta 4–6 volte più lento: Kokoro dovrebbe restare sotto RTF 1 (la voce è pronta prima di finire di parlare), con una prima frase entro circa un secondo. Si verifica sul Pi con lo stesso comando. Se è troppo lento, `ROBY_TTS=piper`. Il modello int8 di Kokoro sul Mac è risultato più lento del fp32: sul Pi va misurato.
+
+## Misure della trascrizione
 
 `python -m roby_voice.bench` sintetizza con Piper le 30 frasi di `bench/frasi.txt` e le trascrive con ogni motore. Colonne della tabella:
 - **carica:** tempo di caricamento del modello;

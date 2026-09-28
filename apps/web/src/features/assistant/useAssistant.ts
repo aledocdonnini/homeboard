@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { addDays, describe, nextReminderAt, zonedDate } from "@homeboard/core/recurrence";
-import { DESTRUCTIVE, parse, sameThing, type Intent } from "@homeboard/intents";
+import { DESTRUCTIVE, parse, sameThing, smalltalkReply, type Intent } from "@homeboard/intents";
 import { supabase } from "@/lib/supabase";
 import { nextDue, open, shortDate, whenLabel, type Deadline } from "@/features/deadlines/due";
 import { dayLabel } from "@/features/reminders/schedule";
@@ -143,6 +143,8 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
           return { text: data[0] ? `Ho annotato: "${data[0].body}"` : "Non ho niente annotato su questo." };
         }
 
+        case "smalltalk":
+          return { text: smalltalkReply(intent.topic, now, tz) };
         case "confirm": case "cancel":
           return { text: "Non c'era niente da confermare." };
         case "unknown":

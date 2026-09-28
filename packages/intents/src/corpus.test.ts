@@ -190,13 +190,27 @@ const CORPUS: [string, Intent, Partial<Context>?][] = [
   ["ricordami di comprare il latte", unknown("ricordami di comprare il latte")],
   ["cosa c'è domani", unknown("cosa c'è domani")],
   ["cosa?", unknown("cosa?")],
-  ["Roby, che ore sono?", unknown("Roby, che ore sono?")],
+  ["allora", unknown("allora")],
+
+  // ——— Chiacchiere e resti della parola di attivazione ———
+  ["hai aggiungi il latte", add("Latte")],
+  ["ehi allora aggiungi il pane", add("Pane")],
+  ["jarvis timer pasta dieci minuti", timer(600, "pasta")],
+  ["come stai", { type: "smalltalk", topic: "how" }],
+  ["come va", { type: "smalltalk", topic: "how" }],
+  ["ciao", { type: "smalltalk", topic: "hello" }],
+  ["buongiorno roby", { type: "smalltalk", topic: "hello" }],
+  ["grazie", { type: "smalltalk", topic: "thanks" }],
+  ["Roby, che ore sono?", { type: "smalltalk", topic: "time" }],
+  ["che giorno è oggi", { type: "smalltalk", topic: "date" }],
+  ["chi sei", { type: "smalltalk", topic: "who" }],
+  ["cosa sai fare?", { type: "smalltalk", topic: "help" }],
   ["latte e uova", unknown("latte e uova")],
 
   // ——— Il campo di testo della PWA: senza verbo è spesa ———
   ["latte, uova, pane", add("Latte", "Uova", "Pane"), { bareIsShopping: true }],
   ["Latte e uova", add("Latte", "Uova"), { bareIsShopping: true }],
-  ["come stai?", unknown("come stai?"), { bareIsShopping: true }],
+  ["come stai?", { type: "smalltalk", topic: "how" }, { bareIsShopping: true }],
   ["fai il caffè", unknown("fai il caffè"), { bareIsShopping: true }],
   ["accendi la luce", unknown("accendi la luce"), { bareIsShopping: true }],
   ["pane integrale", add("Pane integrale"), { bareIsShopping: true }],
@@ -206,3 +220,12 @@ const CORPUS: [string, Intent, Partial<Context>?][] = [
 for (const [text, expected, extra] of CORPUS) {
   test(`«${text}»`, () => assert.deepEqual(parse(text, { ...ctx, ...extra }), expected));
 }
+
+test("risposte alle chiacchiere", async () => {
+  const { smalltalkReply, spokenTime } = await import("./smalltalk.ts");
+  assert.equal(spokenTime(new Date("2026-09-28T13:40:00Z"), "Europe/Rome"), "le 15 e 40");
+  assert.equal(spokenTime(new Date("2026-09-28T11:05:00Z"), "Europe/Rome"), "l'una e 5");
+  assert.equal(smalltalkReply("time", new Date("2026-09-28T10:00:00Z"), "Europe/Rome"), "È mezzogiorno.");
+  assert.equal(smalltalkReply("time", new Date("2026-09-28T07:00:00Z"), "Europe/Rome"), "Sono le 9 in punto.");
+  assert.equal(smalltalkReply("date", ctx.now, "Europe/Rome"), "Oggi è lunedì 28 settembre.");
+});

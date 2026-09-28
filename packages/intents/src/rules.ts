@@ -10,16 +10,36 @@ import { resolveWhen, takeDate, takeDuration, takeRecurrence, takeTime, zonedTim
 export function parse(text: string, ctx: Context): Intent {
   const u = new Utterance(text);
   // Resti della parola di attivazione e cortesie: "Ehi Roby, per favore puoi aggiungere…, grazie".
-  u.take(/^[\s,.!?]*(?:(?:ehi|hey|ei|ciao|ok|senti) )?roby\b[\s,.!:]*/);
+  // La trascrizione parte appena scatta la parola, e spesso ne prende la coda: "hai aggiungi il latte".
+  u.take(/^[\s,.!?]*(?:(?:ehi|hey|ei|hai|ciao|ok|senti) )?(?:roby|robi|jarvis)\b[\s,.!:]*/);
+  u.take(/^\s*(?:(?:hai|ehi|hey|ei|eh|allora|dunque|ok|okay|senti|dai|ecco|allora|beh|mah)\b[\s,.!]*)+(?=\S)/);
   u.take(/^\s*(?:per favore|per piacere|scusa|senti)\b[\s,]*/);
   u.take(/^\s*(?:mi |me lo |ce lo )?(?:puoi|potresti|riesci a|vorrei che|voglio)\s+/);
   u.take(/[\s,]*\b(?:per favore|per piacere|grazie(?: mille)?)[\s.!?]*$/);
   u.take(/[\s.!?]+$/);
   const t = u.text;
-  if (!t) return { type: "unknown", text };
+  // "Grazie!" da solo: la cortesia in coda l'ha tolto, ma era tutta la frase.
+  if (!t) return /grazie|bravo|brava/i.test(text) ? { type: "smalltalk", topic: "thanks" } : { type: "unknown", text };
+  const chat = smalltalk(t);
+  if (chat) return chat;
 
   const intent = confirmation(t) ?? timer(u, ctx) ?? note(u) ?? reminder(u, ctx) ?? deadline(u, ctx) ?? shopping(u, ctx) ?? question(u);
   return intent && intent.type !== "unknown" ? intent : { type: "unknown", text };
+}
+
+// ——— Chiacchiere ————————————————————————————————————————————————————————————————
+
+function smalltalk(t: string): Intent | null {
+  const topic =
+    /^(?:ciao|buongiorno|buonasera|buon pomeriggio|salve|ehila|ehi|hey)(?: roby)?$/.test(t) ? "hello"
+    : /^(?:come (?:stai|va|te la passi|butta)|tutto (?:bene|ok)|come ti senti)\b/.test(t) ? "how"
+    : /^(?:grazie|grazie mille|bravo|brava|perfetto|ottimo|gentilissim[oa])$/.test(t) ? "thanks"
+    : /\b(?:che ore sono|che ora e|mi dici l'ora|dimmi l'ora|sai che ore sono)\b/.test(t) ? "time"
+    : /\b(?:che giorno e|che giorno e oggi|quanti ne abbiamo|che data e|oggi che giorno e)\b/.test(t) ? "date"
+    : /^(?:chi sei|come ti chiami|tu chi sei|chi e roby)\b/.test(t) ? "who"
+    : /^(?:cosa sai fare|cosa puoi fare|che cosa sai fare|aiuto|come funzioni|cosa ti posso chiedere)\b/.test(t) ? "help"
+    : null;
+  return topic ? { type: "smalltalk", topic } : null;
 }
 
 // ——— Sì / no ——————————————————————————————————————————————————————————————————

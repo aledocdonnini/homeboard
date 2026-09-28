@@ -6,7 +6,7 @@ import type { AnswerPanel } from "@homeboard/core/protocol";
 import { arrange, guessCategory, normalize, positionBetween, type Item, type Stat } from "@homeboard/core/items";
 import { addDays, daysBetween, describe, nextOccurrence, nextReminderAt, zonedDate, type PlainDate, type Recurrence } from "@homeboard/core/recurrence";
 import { secondsLeft, spoken } from "@homeboard/core/timers";
-import { sameThing, type Intent } from "@homeboard/intents";
+import { sameThing, smalltalkReply, type Intent } from "@homeboard/intents";
 import type { BrainOp, Row, Store } from "./store.ts";
 import type { Timers } from "./timers.ts";
 
@@ -160,6 +160,8 @@ export function execute(intent: Intent, { store, timers, householdId, timezone, 
         : { reply: "Non ho niente annotato su questo.", panel: { kind: "text" } };
     }
 
+    case "smalltalk":
+      return { reply: smalltalkReply(intent.topic, now, timezone), panel: null };
     case "confirm": case "cancel":
       return { reply: "Non c'era niente da confermare.", panel: null };
     case "unknown":
