@@ -21,11 +21,14 @@ import type { Item } from "./items.ts";
 export type Patch = Partial<Pick<Item, "name" | "category" | "checked" | "position" | "deleted_at">>;
 export type NewRow = Pick<Item, "id" | "household_id" | "name" | "category" | "position"> & Patch;
 
-export type Op =
-  | { kind: "insert"; itemId: string; row: NewRow }
-  | { kind: "update"; itemId: string; patch: Patch };
+/** Un'operazione in coda. I tipi predefiniti sono quelli della spesa; brain usa la stessa coda per tutte le tabelle. */
+export type Op<R = NewRow, P = Patch> =
+  | { kind: "insert"; itemId: string; row: R }
+  | { kind: "update"; itemId: string; patch: P };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyOp = Op<any, any>;
 
-export type Entry = { seq: number; op: Op };
+export type Entry<O extends AnyOp = Op> = { seq: number; op: O };
 
 /** Esito di un invio. `retry`: rete o server giù, si riprova; `error`: rifiutato, si scarta. */
 export type SendResult = "ok" | "duplicate" | "retry" | { error: string };
@@ -63,14 +66,14 @@ export function rebase(remote: Item, pending: Op[]): Item {
  * e le modifiche a una riga non ancora inviata finiscono dentro l'inserimento.
  * L'ordine fra righe diverse resta quello originale.
  */
-export function compact(entries: Entry[]): Entry[] {
-  const out: Entry[] = [];
+export function compact<O extends AnyOp>(entries: Entry<O>[]): Entry<O>[] {
+  const out: Entry<O>[] = [];
   for (const e of entries) {
     const last = out.findLast((x) => x.op.itemId === e.op.itemId);
     if (last && e.op.kind === "update") {
-      const merged: Op = last.op.kind === "insert"
+      const merged = (last.op.kind === "insert"
         ? { ...last.op, row: { ...last.op.row, ...e.op.patch } }
-        : { ...last.op, patch: { ...last.op.patch, ...e.op.patch } };
+        : { ...last.op, patch: { ...last.op.patch, ...e.op.patch } }) as O;
       out[out.indexOf(last)] = { seq: e.seq, op: merged }; // prende il seq più recente: si cancellano tutti quelli <=
       continue;
     }
@@ -80,22 +83,22 @@ export function compact(entries: Entry[]): Entry[] {
 }
 
 /** Le operazioni in coda su righe che il server ha cancellato non servono più. */
-export const obsolete = (entries: Entry[], deletedIds: Set<string>) =>
+export const obsolete = <O extends AnyOp>(entries: Entry<O>[], deletedIds: Set<string>) =>
   entries.filter((e) => e.op.kind === "update" && deletedIds.has(e.op.itemId));
 
-export type FlushReport = {
+export type FlushReport<O extends AnyOp = Op> = {
   /** Seq inviati (o scartati): tutte le voci di coda con seq <= di questi, per la stessa riga, si tolgono. */
-  sent: Entry[];
+  sent: Entry<O>[];
   /** Inserimenti scartati perché la stessa cosa c'era già: la riga locale va tolta. */
   duplicates: string[];
-  errors: { entry: Entry; error: string }[];
+  errors: { entry: Entry<O>; error: string }[];
   /** true se ci si è fermati per un errore di rete: il resto della coda aspetta. */
   stopped: boolean;
 };
 
 /** Svuota la coda in ordine. Al primo errore di rete si ferma, così l'ordine delle modifiche resta quello. */
-export async function flush(entries: Entry[], send: (op: Op) => Promise<SendResult>): Promise<FlushReport> {
-  const report: FlushReport = { sent: [], duplicates: [], errors: [], stopped: false };
+export async function flush<O extends AnyOp>(entries: Entry<O>[], send: (op: O) => Promise<SendResult>): Promise<FlushReport<O>> {
+  const report: FlushReport<O> = { sent: [], duplicates: [], errors: [], stopped: false };
   for (const entry of compact(entries)) {
     const result = await send(entry.op);
     if (result === "retry") {
@@ -112,13 +115,13 @@ export async function flush(entries: Entry[], send: (op: Op) => Promise<SendResu
 /**
  * Traduce l'errore di Supabase/PostgREST in cosa fare.
  * - Nessun codice, status 0 o 5xx, JWT scaduto: problema di rete o temporaneo, si riprova.
- * - Chiave primaria già presente: l'inserimento era già arrivato (risposta persa), va bene così.
+ * - Chiave primaria già presente ("…_pkey"): l'inserimento era già arrivato (risposta persa), va bene così.
  * - Nome già in lista (indice unico): duplicato da scartare.
  * - Tutto il resto (permessi, vincoli): rifiutato, si scarta e si segnala.
  */
 export function classify(error: { code?: string; message: string } | null, status: number): SendResult {
   if (!error) return "ok";
   if (!error.code || status === 0 || status >= 500 || error.code === "PGRST301") return "retry";
-  if (error.code === "23505") return error.message.includes("shopping_items_pkey") ? "ok" : "duplicate";
+  if (error.code === "23505") return error.message.includes("_pkey") ? "ok" : "duplicate";
   return { error: error.message };
 }

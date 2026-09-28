@@ -104,6 +104,7 @@ npm run dev                                                       # la PWA su ht
 ```
 
 - **Accesso:** l'email con il codice arriva in Mailpit, su <http://127.0.0.1:54324>.
+- **La postazione con brain vero** (Supabase locale, abbinamento dalla PWA): vedi [`services/brain/README.md`](services/brain/README.md).
 - **La postazione:** senza Raspberry si prova col simulatore di brain, che usa l'interprete vero:
   ```bash
   npm run simulate -w @homeboard/brain            # poi apri http://localhost:3000/casa e scrivi frasi nel terminale

@@ -8,12 +8,14 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/main.ts",
     "simulate": "node src/simulator.ts",
     "typecheck": "tsc -p . --noEmit"
   },
   "dependencies": {
     "@homeboard/core": "*",
     "@homeboard/intents": "*",
+    "@supabase/supabase-js": "^2.117.2",
     "ws": "^8.22.0"
   },
   "devDependencies": {
