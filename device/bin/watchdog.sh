@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Chromium risponde ancora? Lo chiede alla porta di debug locale (solo 127.0.0.1).
-# Se non risponde, o la pagina non è più la TV, riavvia il kiosk. Lo lancia un timer ogni 2 minuti.
+# Se non risponde, o la pagina non è più /casa, riavvia il kiosk. Lo lancia un timer ogni 2 minuti.
+# brain e voice non servono qui: se cadono li rilancia systemd (Restart=always).
 set -uo pipefail
 pages=$(curl -sf -m 10 http://127.0.0.1:9222/json/list) || {
   echo "Chromium non risponde: riavvio il kiosk"

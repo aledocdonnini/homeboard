@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Chromium a tutto schermo sulla vista TV. Lo lancia systemd (homeboard-kiosk.service) e lo rilancia se si chiude.
+# Chromium a tutto schermo su /casa, la vista di Roby: legge tutto da brain (ws://127.0.0.1:8765).
+# Lo lancia systemd (homeboard-kiosk.service) e lo rilancia se si chiude.
 set -euo pipefail
 # shellcheck source=/dev/null
 source "$HOME/.config/homeboard/homeboard.env"

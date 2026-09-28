@@ -3,4 +3,4 @@ Description=Homeboard: riaccende il pannello
 
 [Service]
 Type=oneshot
-ExecStart=%h/homeboard/bin/screen.sh on
+ExecStart=%h/homeboard/device/bin/screen.sh on

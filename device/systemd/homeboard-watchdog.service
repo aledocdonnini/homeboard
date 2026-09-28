@@ -3,4 +3,4 @@ Description=Homeboard: controlla che Chromium risponda
 
 [Service]
 Type=oneshot
-ExecStart=%h/homeboard/bin/watchdog.sh
+ExecStart=%h/homeboard/device/bin/watchdog.sh

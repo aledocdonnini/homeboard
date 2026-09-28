@@ -1,0 +1,6 @@
+[Unit]
+Description=Homeboard: aggiornamento del software (git pull, dipendenze, servizi)
+
+[Service]
+Type=oneshot
+ExecStart=%h/homeboard/device/bin/update.sh

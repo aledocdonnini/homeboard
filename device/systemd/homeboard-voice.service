@@ -1,0 +1,14 @@
+[Unit]
+Description=Homeboard: voice (parola di attivazione, trascrizione, voce di Roby; tutto in locale)
+After=homeboard-brain.service
+Wants=homeboard-brain.service
+StartLimitIntervalSec=0
+
+[Service]
+EnvironmentFile=%h/.config/homeboard/homeboard.env
+ExecStart=%h/homeboard/.venv-voice/bin/roby-voice
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

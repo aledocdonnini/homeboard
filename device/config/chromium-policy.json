@@ -1,7 +1,13 @@
 {
-  "LocalNetworkAccessAllowedForUrls": ["https://homeboard.vercel.app"],
-  "AutoplayAllowlist": ["https://homeboard.vercel.app"],
-  "NotificationsBlockedForUrls": ["*"],
+  "LocalNetworkAccessAllowedForUrls": [
+    "https://homeboard-puce.vercel.app"
+  ],
+  "AutoplayAllowlist": [
+    "https://homeboard-puce.vercel.app"
+  ],
+  "NotificationsBlockedForUrls": [
+    "*"
+  ],
   "TranslateEnabled": false,
   "PasswordManagerEnabled": false,
   "BrowserSignin": 0,

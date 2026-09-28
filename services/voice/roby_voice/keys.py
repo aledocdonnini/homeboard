@@ -1,6 +1,8 @@
 """I tasti originali del televisore, collegati ai GPIO con l'overlay gpio-key: arrivano come tasti di una
-tastiera (/dev/input/eventN). Si leggono con la libreria standard: struct input_event del kernel Linux."""
+tastiera (/dev/input/eventN). Si leggono con la libreria standard: struct input_event del kernel Linux.
+Ogni riga dtoverlay=gpio-key crea un dispositivo a sé: ROBY_KEYS_DEVICE può essere un glob, si leggono tutti."""
 
+import glob
 import queue
 import struct
 import threading
@@ -16,11 +18,14 @@ class Keys:
         self._device, self._events = device, events
 
     def start(self) -> None:
-        if self._device:
-            threading.Thread(target=self._run, daemon=True).start()
+        paths = sorted(glob.glob(self._device)) if self._device else []
+        if self._device and not paths:
+            print(f"Nessun tasto trovato in {self._device}: controlla dtoverlay=gpio-key in config.txt", flush=True)
+        for path in paths:
+            threading.Thread(target=self._run, args=(path,), daemon=True).start()
 
-    def _run(self) -> None:
-        with open(self._device, "rb") as f:
+    def _run(self, path: str) -> None:
+        with open(path, "rb") as f:
             while data := f.read(_EVENT.size):
                 _, _, kind, code, value = _EVENT.unpack(data)
                 if kind == EV_KEY and value in (0, 1):  # 1 premuto, 0 rilasciato (2 = ripetizione, ignorata)

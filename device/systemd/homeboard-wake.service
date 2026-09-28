@@ -1,8 +1,0 @@
-[Unit]
-Description=Homeboard: di notte un tasto riaccende il pannello
-PartOf=homeboard-session.target
-
-[Service]
-ExecStart=/usr/bin/python3 %h/homeboard/bin/wake-on-key.py
-Restart=always
-RestartSec=5

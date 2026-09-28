@@ -55,7 +55,7 @@ homeboard/                      workspace npm
 │  └─ functions/
 │     ├─ _shared/               ricorrenze e pianificazione delle notifiche (TS puro, esposto come @homeboard/core)
 │     └─ notify/                Edge Function: notifiche push di promemoria e scadenze
-├─ device/                      Raspberry Pi: kiosk, tasti, schermo, voce, watchdog
+├─ device/                      Raspberry Pi 5: installazione, servizi systemd (brain, voice, kiosk), tasti, aggiornamenti
 └─ docs/                        input vocale (progetto) e immagini
 ```
 
@@ -176,7 +176,7 @@ Importa il repository, con **Root Directory** `apps/web` (il workspace npm si in
 2. **Sul telefono:** apri l'app, accedi, crea la casa, e da *Impostazioni → Aggiungi una persona* aggiungi gli altri con la loro email.
 3. **Su iPhone:** *Condividi → Aggiungi alla schermata Home*. Le notifiche web su iOS arrivano solo così.
 4. **Notifiche:** attivale in *Casa*.
-5. **Raspberry:** segui [`device/README.md`](device/README.md), con `TV_URL=https://<app>/casa`, poi abbina la TV da *Impostazioni → Abbina una TV*.
+5. **Raspberry:** `git clone` del repository sul Pi e `device/install.sh`, poi le chiavi pubbliche di Supabase in `~/.config/homeboard/homeboard.env`. Al riavvio abbini Roby da *Impostazioni → Abbina una TV*. I dettagli sono in [`device/README.md`](device/README.md).
 
 Sul piano gratuito il progetto Supabase si ferma dopo 7 giorni senza attività. Il battito della TV, una richiesta al minuto, dovrebbe bastare a tenerlo attivo: da verificare nella prima settimana. Se non basta, si aggiunge un keepalive.
 

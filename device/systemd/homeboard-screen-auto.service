@@ -4,4 +4,4 @@ PartOf=homeboard-session.target
 
 [Service]
 Type=oneshot
-ExecStart=%h/homeboard/bin/screen.sh auto
+ExecStart=%h/homeboard/device/bin/screen.sh auto

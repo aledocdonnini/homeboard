@@ -1,4 +1,4 @@
 [Unit]
-Description=Homeboard: sessione della TV (kiosk e tasti)
+Description=Homeboard: sessione grafica (kiosk e pannello)
 # La avvia l'autostart di labwc, quando c'è il display Wayland.
-Wants=homeboard-kiosk.service homeboard-wake.service homeboard-screen-auto.service
+Wants=homeboard-kiosk.service homeboard-screen-auto.service

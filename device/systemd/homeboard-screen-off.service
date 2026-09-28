@@ -3,4 +3,4 @@ Description=Homeboard: spegne il pannello
 
 [Service]
 Type=oneshot
-ExecStart=%h/homeboard/bin/screen.sh off
+ExecStart=%h/homeboard/device/bin/screen.sh off

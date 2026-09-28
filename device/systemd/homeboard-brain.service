@@ -1,0 +1,14 @@
+[Unit]
+Description=Homeboard: brain (interprete, timer, copia locale, Supabase, WebSocket per /casa)
+StartLimitIntervalSec=0
+
+[Service]
+EnvironmentFile=%h/.config/homeboard/homeboard.env
+Environment=SCREEN_WAKE_CMD=%h/homeboard/device/bin/screen.sh wake
+WorkingDirectory=%h/homeboard/services/brain
+ExecStart=%h/.local/node/bin/node --disable-warning=ExperimentalWarning src/main.ts
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
