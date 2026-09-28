@@ -1,4 +1,4 @@
-import { nextReminderAt, occurrencesBetween, zonedDate, type PlainDate, type Recurrence } from "@shared/recurrence";
+import { nextReminderAt, occurrencesBetween, zonedDate, type PlainDate, type Recurrence } from "@homeboard/core/recurrence";
 import type { Tables } from "@/lib/database.types";
 
 export type Reminder = Tables<"reminders">;

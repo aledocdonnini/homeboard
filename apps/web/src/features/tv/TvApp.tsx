@@ -8,7 +8,7 @@ import RobyTile from "@/components/ui/RobyTile";
 import type { Deadline } from "@/features/deadlines/due";
 import { toDashData } from "@/features/home/dashData";
 import type { Reminder } from "@/features/reminders/schedule";
-import type { Item } from "@/features/shopping/items";
+import type { Item } from "@homeboard/core/items";
 import TvScreen, { type Arrival } from "./TvScreen";
 
 // La TV: nessun login interattivo. Entra come utente anonimo (la sessione resta in questo browser),

@@ -16,7 +16,7 @@
 //     il secondo inserimento si scarta.
 //   - Ogni invio è idempotente: id generati dal client e valori assoluti (checked = true, mai "inverti").
 
-import type { Item } from "./items";
+import type { Item } from "./items.ts";
 
 export type Patch = Partial<Pick<Item, "name" | "category" | "checked" | "position" | "deleted_at">>;
 export type NewRow = Pick<Item, "id" | "household_id" | "name" | "category" | "position"> & Patch;

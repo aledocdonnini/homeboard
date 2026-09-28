@@ -1,0 +1,14 @@
+{
+  "name": "@homeboard/brain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Il cervello della postazione di casa: riceve il testo da voice, interpreta, esegue, tiene timer e copia locale, parla con /casa.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "dependencies": {
+    "@homeboard/core": "*",
+    "@homeboard/intents": "*"
+  }
+}

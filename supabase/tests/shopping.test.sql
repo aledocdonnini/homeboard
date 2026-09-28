@@ -1,5 +1,5 @@
 -- Lista della spesa: permessi, orologio del server, suggerimenti. Esegui: npm run test:db
--- Anna è membro, Carla un'estranea, la TV un dispositivo della casa.
+-- Anna è membro, Carla un'estranea, la TV un dispositivo della casa (legge e, a voce, scrive).
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(18);
@@ -62,10 +62,10 @@ select is_empty($$ update public.shopping_items set checked = true returning 1 $
 -- ——— La TV ———
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated","is_anonymous":true}', true);
 select is((select count(*) from public.shopping_items), 2::bigint, 'La TV legge la lista (anche le righe tolte, per la sincronizzazione)');
-select is_empty($$ update public.shopping_items set checked = true returning 1 $$, 'La TV non modifica');
-select throws_ok(
+select isnt_empty($$ update public.shopping_items set checked = true returning 1 $$, 'La TV spunta (a voce)');
+select lives_ok(
   $$ insert into public.shopping_items (household_id, name) values ('00000000-0000-0000-0000-000000000001', 'Dalla TV') $$,
-  '42501', null, 'La TV non aggiunge');
+  'La TV aggiunge (a voce)');
 
 select * from finish();
 rollback;

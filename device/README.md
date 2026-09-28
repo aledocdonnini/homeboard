@@ -1,6 +1,6 @@
 # Homeboard sul Raspberry Pi
 
-La TV Crezar: un Raspberry Pi 4 dentro la scocca, un monitor 10,5" 3:2 (1920×1280) al posto del tubo, e i sei tasti di preselezione originali collegati ai GPIO. All'accensione parte Chromium a tutto schermo su `/tv`, senza tastiera né mouse.
+La TV Crezar: un Raspberry Pi 4 dentro la scocca, un monitor 10,5" 3:2 (1920×1280) al posto del tubo, e i sei tasti di preselezione originali collegati ai GPIO. All'accensione parte Chromium a tutto schermo su `/casa`, senza tastiera né mouse.
 
 ## Cosa serve
 
@@ -38,7 +38,7 @@ Per GND vanno bene i pin 30, 34 o 39. Sono tasti meccanici: se un tasto "rimbalz
 
    Si può rilanciare senza danni.
 4. **Configura** `~/.config/homeboard/homeboard.env`:
-   - `TV_URL`: l'indirizzo dell'app su Vercel, con `/tv` in fondo;
+   - `TV_URL`: l'indirizzo dell'app su Vercel, con `/casa` in fondo;
    - `NIGHT_START` e `NIGHT_END`: allineali agli orari notturni della casa.
 
    Se cambi gli orari, rilancia `./install.sh` per aggiornare i timer.
@@ -55,7 +55,7 @@ Per GND vanno bene i pin 30, 34 o 39. Sono tasti meccanici: se un tasto "rimbalz
 | Cosa succede | Chi rimedia |
 |---|---|
 | Chromium va in crash o si chiude | `homeboard-kiosk.service` lo rilancia dopo 3 secondi, sempre |
-| Chromium si pianta o la pagina non è più `/tv` | `watchdog.sh` ogni 2 minuti interroga la porta di debug locale e, se serve, riavvia il kiosk |
+| Chromium si pianta o la pagina non è più `/casa` | `watchdog.sh` ogni 2 minuti interroga la porta di debug locale e, se serve, riavvia il kiosk |
 | Memoria che cresce nei giorni | il kiosk si riavvia ogni notte alle 4 (`homeboard-refresh.timer`) |
 | Il sistema si blocca | il watchdog hardware riavvia il Pi dopo 15 secondi (`RuntimeWatchdogSec`) |
 | Cade la rete | la pagina è in cache nel service worker e mostra l'ultima copia dei dati; al ritorno della rete si riallinea |

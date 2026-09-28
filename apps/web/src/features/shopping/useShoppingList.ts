@@ -5,8 +5,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/localdb";
 import { supabase } from "@/lib/supabase";
 import { change, errorKey, pendingCount, receive, sync } from "./engine";
-import { guessCategory, normalize, positionBetween, type Item } from "./items";
-import type { Op } from "./sync";
+import { guessCategory, normalize, positionBetween, type Item } from "@homeboard/core/items";
+import type { Op } from "@homeboard/core/sync";
 
 // Lista della casa letta dalla copia locale (funziona offline). Le modifiche vanno in coda e partono con la rete;
 // il realtime e i ritorni in primo piano tengono la copia allineata. Regole dei conflitti in sync.ts.

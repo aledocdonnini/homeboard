@@ -2,20 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House } from "@phosphor-icons/react";
+import { GearSix } from "@phosphor-icons/react";
 import RobyTile from "@/components/ui/RobyTile";
 
 // I tasti di preselezione del televisore. Il numero è il canale della TV che mostra la stessa cosa.
 // Telefono: una fila di tasti in basso, sotto il pollice; premuto = nero, come un tasto abbassato.
 // Desktop: una colonna di numeri a destra, come il resto del cruscotto (niente riquadri, linee fra le voci);
-// il canale attivo ha il numero arancio, come l'OSD della TV. Casa in fondo, Roby in cima.
+// il canale attivo ha il numero arancio, come l'OSD della TV. Impostazioni in fondo, Roby in cima.
 // La colonna sta dentro la zona sicura (--overscan), come tutto il contenuto: la cornice non la copre.
 const TABS = [
   { href: "/", label: "Oggi", key: "1" },
   { href: "/spesa", label: "Spesa", key: "2" },
   { href: "/promemoria", label: "Promemoria", key: "3" },
   { href: "/scadenze", label: "Scadenze", key: "4" },
-  { href: "/casa", label: "Casa", key: null },
+  { href: "/impostazioni", label: "Impostazioni", key: null },
 ];
 
 export default function TabBar() {
@@ -40,7 +40,7 @@ export default function TabBar() {
             >
               {t.key
                 ? <span aria-hidden className="[font-stretch:75%] text-2xl leading-none font-semibold lg:text-6xl lg:leading-[0.8] lg:group-aria-[current=page]:text-accent-text">{t.key}</span>
-                : <House aria-hidden weight="bold" className="size-5 lg:size-8 lg:group-aria-[current=page]:text-accent-text" />}
+                : <GearSix aria-hidden weight="bold" className="size-5 lg:size-8 lg:group-aria-[current=page]:text-accent-text" />}
               <span className="text-[0.7rem] font-semibold lg:text-sm">{t.label}</span>
             </Link>
           </li>

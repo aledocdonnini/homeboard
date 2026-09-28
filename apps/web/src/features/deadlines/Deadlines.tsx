@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Plus } from "@phosphor-icons/react";
-import { describe, zonedDate } from "@shared/recurrence";
+import { describe, zonedDate } from "@homeboard/core/recurrence";
 import { supabase } from "@/lib/supabase";
 import { useRows } from "@/lib/useRows";
 import Big from "@/components/dash/Big";

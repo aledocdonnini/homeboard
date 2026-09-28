@@ -64,10 +64,10 @@ select is((select count(*) from public.deadlines) + (select count(*) from public
 -- ——— La TV ———
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000f1","role":"authenticated","is_anonymous":true}', true);
 select is((select count(*) from public.deadlines where done_at is null), 2::bigint, 'La TV legge le scadenze aperte');
-select is_empty($$ update public.reminders set title = 'TV' returning 1 $$, 'La TV non modifica i promemoria');
-select throws_ok(
+select isnt_empty($$ update public.reminders set title = 'TV' returning 1 $$, 'La TV modifica i promemoria (a voce)');
+select lives_ok(
   $$ select public.complete_deadline((select id from public.deadlines where done_at is null and title = 'Multa')) $$,
-  'P0002', null, 'La TV non segna fatte le scadenze');
+  'La TV segna fatta una scadenza ("ho pagato la multa")');
 
 select * from finish();
 rollback;

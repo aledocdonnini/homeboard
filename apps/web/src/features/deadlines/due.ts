@@ -1,4 +1,4 @@
-import { daysBetween, nextOccurrence, type PlainDate, type Recurrence } from "@shared/recurrence";
+import { daysBetween, nextOccurrence, type PlainDate, type Recurrence } from "@homeboard/core/recurrence";
 import type { Tables } from "@/lib/database.types";
 
 export type Deadline = Tables<"deadlines">;

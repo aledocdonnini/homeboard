@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DotsSixVertical } from "@phosphor-icons/react";
-import type { Item } from "./items";
+import type { Item } from "@homeboard/core/items";
 
 type Drag = { id: string; from: number; startY: number; dy: number; mids: number[] };
 

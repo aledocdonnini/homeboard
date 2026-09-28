@@ -125,6 +125,25 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notes": {
+                  Row: {
+                    "body": string,"created_at": string,"created_by": string | null,"deleted_at": string | null,"embedding": string | null,"household_id": string,"id": string,"source": string,"tsv": unknown,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "body": string,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"embedding"?: string | null,"household_id": string,"id"?: string,"source"?: string,"tsv"?: never,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "body"?: string,"created_at"?: string,"created_by"?: string | null,"deleted_at"?: string | null,"embedding"?: string | null,"household_id"?: string,"id"?: string,"source"?: string,"tsv"?: never,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notes_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"notification_log": {
                   Row: {
                     "item_id": string,"key": string,"kind": string,"sent_at": string
@@ -227,6 +246,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"timers": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"duration_s": number,"ends_at": string,"household_id": string,"id": string,"label": string | null,"status": string,"updated_at": string,"updated_by": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"duration_s": number,"ends_at": string,"household_id": string,"id": string,"label"?: string | null,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"duration_s"?: number,"ends_at"?: string,"household_id"?: string,"id"?: string,"label"?: string | null,"status"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "timers_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"unparsed_log": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"household_id": string,"id": number,"source": string,"text": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"household_id": string,"id"?: never,"source": string,"text": string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"household_id"?: string,"id"?: never,"source"?: string,"text"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "unparsed_log_household_id_fkey"
+      columns: ["household_id"]
+isOneToOne: false
+      referencedRelation: "households"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -246,6 +303,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "can_read":
+{ Args: { "hid": string }; Returns: boolean
+                           },
+"can_write":
 { Args: { "hid": string }; Returns: boolean
                            },
 "claim_pairing":
@@ -268,6 +328,9 @@ isOneToOne: false
                            },
 "hook_before_user_created":
 { Args: { "event": Json }; Returns: Json
+                           },
+"is_device":
+{ Args: { "hid": string }; Returns: boolean
                            },
 "is_member":
 { Args: { "hid": string }; Returns: boolean

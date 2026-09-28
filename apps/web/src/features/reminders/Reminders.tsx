@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { addDays, describe, zonedDate } from "@shared/recurrence";
+import { addDays, describe, zonedDate } from "@homeboard/core/recurrence";
 import { useRows } from "@/lib/useRows";
 import Big from "@/components/dash/Big";
 import Button from "@/components/ui/Button";

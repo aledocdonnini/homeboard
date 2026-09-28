@@ -3,8 +3,8 @@
 
 import { db } from "@/lib/localdb";
 import { supabase } from "@/lib/supabase";
-import type { Item } from "./items";
-import { applyOp, classify, flush, isNewer, obsolete, rebase, type Entry, type Op, type SendResult } from "./sync";
+import type { Item } from "@homeboard/core/items";
+import { applyOp, classify, flush, isNewer, obsolete, rebase, type Entry, type Op, type SendResult } from "@homeboard/core/sync";
 
 export const COLUMNS = "id, household_id, name, category, checked, position, updated_at, deleted_at";
 const pullKey = (hid: string) => `pull:${hid}`;

@@ -1,0 +1,16 @@
+[project]
+name = "roby-voice"
+version = "0.1.0"
+description = "La voce della postazione di casa: parola di attivazione, fine frase, trascrizione e sintesi, tutto in locale."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+# Si installano sul Pi (fase 5); il pacchetto base resta importabile anche senza.
+audio = ["openwakeword", "sounddevice", "numpy", "piper-tts"]
+vosk = ["vosk"]
+whisper = ["faster-whisper"]
+dev = ["mypy", "pytest"]
+
+[tool.mypy]
+strict = true

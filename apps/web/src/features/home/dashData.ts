@@ -1,7 +1,7 @@
-import { zonedDate } from "@shared/recurrence";
+import { zonedDate } from "@homeboard/core/recurrence";
 import { open, type Deadline } from "@/features/deadlines/due";
 import { hhmm, onDay, type Reminder } from "@/features/reminders/schedule";
-import { arrange, type Item } from "@/features/shopping/items";
+import { arrange, type Item } from "@homeboard/core/items";
 import type { DashData } from "@/features/tv/Cruscotto";
 
 const toDate = (day: string) => {

@@ -8,3 +8,8 @@ node_modules/
 supabase/.temp/
 supabase/.branches/
 design/
+
+# Python (services/voice)
+__pycache__/
+.mypy_cache/
+.venv/

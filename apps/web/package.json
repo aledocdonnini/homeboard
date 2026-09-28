@@ -12,6 +12,7 @@
     "prebuild": "npm run build -w roby-face"
   },
   "dependencies": {
+    "@homeboard/core": "*",
     "@phosphor-icons/react": "^2.1.10",
     "@serwist/turbopack": "^9.5.12",
     "@supabase/supabase-js": "^2.117.2",

@@ -35,14 +35,20 @@ Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
 
 ```
 homeboard/                      workspace npm
-├─ apps/web/                    Next.js 16 (App Router, TypeScript strict), la PWA e la TV → Vercel
+├─ apps/web/                    Next.js 16 (App Router, TypeScript strict): la PWA e /casa, la vista del Pi → Vercel
 │  └─ src/features/             spesa, promemoria, scadenze, casa, home, tv, auth
-├─ packages/roby-face/          <roby-face>: web component del volto, senza dipendenze
+├─ packages/
+│  ├─ core/                     logica pura condivisa: spesa, sincronizzazione offline, ricorrenze, protocollo del Pi
+│  ├─ intents/                  interprete dei comandi: frase in italiano → intento validato (lo stesso su Pi e PWA)
+│  └─ roby-face/                <roby-face>: web component del volto, senza dipendenze
+├─ services/                    sul Raspberry
+│  ├─ brain/                    Node: esegue i comandi, timer, copia locale SQLite ⇄ Supabase, WebSocket per /casa
+│  └─ voice/                    Python: parola di attivazione, trascrizione, sintesi; da qui esce solo testo
 ├─ supabase/
-│  ├─ migrations/               schema, RLS, pg_cron
+│  ├─ migrations/               schema, RLS, pg_cron, pgvector
 │  ├─ tests/                    test pgTAP delle policy
 │  └─ functions/
-│     ├─ _shared/               ricorrenze e pianificazione delle notifiche (TS puro, condiviso con la PWA)
+│     ├─ _shared/               ricorrenze e pianificazione delle notifiche (TS puro, esposto come @homeboard/core)
 │     └─ notify/                Edge Function: notifiche push di promemoria e scadenze
 ├─ device/                      Raspberry Pi: kiosk, tasti, schermo, voce, watchdog
 └─ docs/                        input vocale (progetto) e immagini
@@ -50,7 +56,7 @@ homeboard/                      workspace npm
 
 - **Dati:** Supabase, cioè Postgres, Auth, Realtime, Edge Functions e pg_cron. Ogni tabella ha la Row Level Security:
   - i **membri** della casa leggono e scrivono;
-  - la **TV** è un utente anonimo abbinato alla casa con un codice, e **legge soltanto**.
+  - il **Pi** è un utente anonimo abbinato alla casa con un codice: legge e scrive i dati di tutti i giorni (spesa, promemoria, scadenze, note, timer), ma non membri, casa o notifiche.
 - **Offline:** la lista della spesa vive in IndexedDB (Dexie) con una coda di modifiche. Il service worker (Serwist) precarica l'app, così si apre senza rete.
 - **Notifiche:**
   - ogni minuto pg_cron chiama la Edge Function `notify` con pg_net;
@@ -93,7 +99,7 @@ npm run dev                                                       # la PWA su ht
 ```
 
 - **Accesso:** l'email con il codice arriva in Mailpit, su <http://127.0.0.1:54324>.
-- **La TV:** si prova su <http://localhost:3000/tv> nello stesso browser, perché ha una sessione separata. Oppure su `/cruscotto`, con dati d'esempio e i tasti da 1 a 6.
+- **La TV:** si prova su <http://localhost:3000/casa> nello stesso browser, perché ha una sessione separata. Oppure su `/cruscotto`, con dati d'esempio e i tasti da 1 a 6.
 - **Il service worker** in sviluppo è spento. Per provare PWA e offline: `npm run build && npm run start -w @homeboard/web`.
 
 ## Comandi
@@ -155,10 +161,10 @@ Importa il repository, con **Root Directory** `apps/web` (il workspace npm si in
 ### Dopo il deploy
 
 1. **Autorizzati a creare la casa:** nel Table Editor di Supabase, tabella `signup_allowlist`, aggiungi la tua email (in minuscolo) con `can_create_household` attivo.
-2. **Sul telefono:** apri l'app, accedi, crea la casa, e da *Casa → Aggiungi una persona* aggiungi gli altri con la loro email.
+2. **Sul telefono:** apri l'app, accedi, crea la casa, e da *Impostazioni → Aggiungi una persona* aggiungi gli altri con la loro email.
 3. **Su iPhone:** *Condividi → Aggiungi alla schermata Home*. Le notifiche web su iOS arrivano solo così.
 4. **Notifiche:** attivale in *Casa*.
-5. **Raspberry:** segui [`device/README.md`](device/README.md), con `TV_URL=https://<app>/tv`, poi abbina la TV da *Casa → Abbina una TV*.
+5. **Raspberry:** segui [`device/README.md`](device/README.md), con `TV_URL=https://<app>/casa`, poi abbina la TV da *Impostazioni → Abbina una TV*.
 
 Sul piano gratuito il progetto Supabase si ferma dopo 7 giorni senza attività. Il battito della TV, una richiesta al minuto, dovrebbe bastare a tenerlo attivo: da verificare nella prima settimana. Se non basta, si aggiunge un keepalive.
 

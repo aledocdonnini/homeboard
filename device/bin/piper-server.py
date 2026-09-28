@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """La voce di Roby sul Raspberry: GET /?text=... restituisce un WAV letto da Piper, in italiano.
 
-La pagina /tv lo usa con ?voce=http://127.0.0.1:5002/?text= (roby-face, audioUrlProvider):
+La pagina /casa lo usa con ?voce=http://127.0.0.1:5002/?text= (roby-face, audioUrlProvider):
 così il volto muove gli occhi seguendo l'audio vero. Ascolta solo su 127.0.0.1.
 Le frasi già dette restano in memoria (le stesse tornano spesso: "La lista della spesa è vuota.").
 """

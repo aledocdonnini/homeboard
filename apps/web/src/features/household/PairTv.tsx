@@ -22,13 +22,13 @@ export default function PairTv({ house }: { house: Household }) {
     const { error } = await supabase.rpc("claim_pairing", { code, household: house.id, name: name.trim() || "TV" });
     setBusy(false);
     if (error) setError(error.code === "P0002" ? "Codice non valido o scaduto: controlla quello sullo schermo, se serve ne compare uno nuovo." : error.message);
-    else router.replace("/casa");
+    else router.replace("/impostazioni");
   }
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-6 pb-32">
       <PageHeader title="Abbina una TV">
-        <p className="text-xl text-muted">La TV vedrà spesa, promemoria e scadenze di {house.name}, senza poter cambiare niente.</p>
+        <p className="text-xl text-muted">Roby, sulla TV, vedrà spesa, promemoria e scadenze di {house.name} e potrà aggiornarli a voce. Membri e impostazioni della casa restano solo tuoi.</p>
       </PageHeader>
       <form onSubmit={pair} className="flex flex-col gap-4">
         <Field id="code" label="Codice sullo schermo" required autoComplete="off" autoCapitalize="characters" maxLength={6}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Freq, Recurrence } from "@shared/recurrence";
+import type { Freq, Recurrence } from "@homeboard/core/recurrence";
 
 export type Preset = { label: string; value: Recurrence | null };
 const UNIT_LABEL: Record<Freq, string> = { day: "giorni", week: "settimane", month: "mesi", year: "anni" };

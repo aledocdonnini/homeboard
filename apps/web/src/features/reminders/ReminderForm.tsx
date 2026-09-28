@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { nextReminderAt, weekday, type Recurrence } from "@shared/recurrence";
+import { nextReminderAt, weekday, type Recurrence } from "@homeboard/core/recurrence";
 import { supabase } from "@/lib/supabase";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";

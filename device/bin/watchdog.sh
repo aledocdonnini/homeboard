@@ -7,7 +7,7 @@ pages=$(curl -sf -m 10 http://127.0.0.1:9222/json/list) || {
   systemctl --user restart homeboard-kiosk.service
   exit 0
 }
-if ! grep -q '"url": *"[^"]*/tv' <<<"$pages"; then
-  echo "La pagina non è più /tv: riavvio il kiosk"
+if ! grep -q '"url": *"[^"]*/casa' <<<"$pages"; then
+  echo "La pagina non è più /casa: riavvio il kiosk"
   systemctl --user restart homeboard-kiosk.service
 fi

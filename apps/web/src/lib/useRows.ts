@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { isNewer } from "@/features/shopping/sync";
+import { isNewer } from "@homeboard/core/sync";
 import { supabase } from "./supabase";
 
 type Row = { id: string; updated_at: string; deleted_at: string | null };

@@ -9,7 +9,7 @@ import Big from "@/components/dash/Big";
 import DotGrid from "@/components/dash/DotGrid";
 import PageHeader from "@/components/ui/PageHeader";
 import Section from "@/components/ui/Section";
-import { arrange, CATEGORIES, normalize, parseQuickAdd, suggest, type Item } from "./items";
+import { arrange, CATEGORIES, normalize, parseQuickAdd, suggest, type Item } from "@homeboard/core/items";
 import { useShoppingList } from "./useShoppingList";
 import SortableGroup from "./SortableGroup";
 import SyncStatus from "./SyncStatus";

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Di notte il pannello è spento: un tasto di preselezione lo riaccende per 2 minuti.
 
-La pagina /tv fa lo stesso (mostra i contenuti per 2 minuti, poi torna "fine delle trasmissioni").
+La pagina /casa fa lo stesso (mostra i contenuti per 2 minuti, poi torna "fine delle trasmissioni").
 Legge gli eventi dei tasti dal dispositivo gpio-keys, senza dipendenze (formato input_event di Linux).
 Serve che l'utente sia nel gruppo `input` (lo è di default su Raspberry Pi OS).
 """

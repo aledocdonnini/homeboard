@@ -38,7 +38,7 @@ export default function TvScreen({ data, tz, night, arrival, voiceUrl }: {
   const sleeping = !!night && isNight(time, night.start, night.end) && !awake;
 
   useEffect(() => {
-    // Taratura dell'overscan dal kiosk: /tv?overscan=6 (in % del lato corto, 0-20).
+    // Taratura dell'overscan dal kiosk: /casa?overscan=6 (in % del lato corto, 0-20).
     const overscan = Number(new URLSearchParams(location.search).get("overscan") ?? NaN);
     if (overscan >= 0 && overscan <= 20) document.documentElement.style.setProperty("--overscan", `${overscan}vmin`);
     const clock = setInterval(() => setTime(localTime(tz)), 15_000);

@@ -1,0 +1,13 @@
+{
+  "name": "@homeboard/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Logica pura condivisa fra PWA, brain e intents: lista della spesa, sincronizzazione offline, ricorrenze, protocollo della postazione.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p . --noEmit"
+  }
+}

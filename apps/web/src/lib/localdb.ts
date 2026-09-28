@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
-import type { Item, Stat } from "@/features/shopping/items";
-import type { Op } from "@/features/shopping/sync";
+import type { Item, Stat } from "@homeboard/core/items";
+import type { Op } from "@homeboard/core/sync";
 
 export type OutboxRow = { seq?: number; household_id: string; op: Op };
 export type StatRow = Stat & { household_id: string };
