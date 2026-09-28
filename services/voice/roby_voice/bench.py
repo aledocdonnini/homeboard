@@ -4,7 +4,7 @@
     python -m roby_voice.bench --registra            registra dal microfono le frasi di bench/frasi.txt (sul Pi)
     python -m roby_voice.bench --dir registrate      misura sulle registrazioni vere
     --motori vosk,whisper-small,whisper-base          quali motori (predefiniti: vosk e whisper-small)
-    python -m roby_voice.bench --voci                sintesi: Piper e Kokoro sulle risposte tipiche di Roby
+    python -m roby_voice.bench --voci                sintesi: Piper, Kokoro ed Edge sulle risposte tipiche di Roby
 
 Per ogni motore: tempo di caricamento, latenza media e al 90° percentile, RTF (tempo di calcolo / durata
 dell'audio: sotto 1 è più veloce del parlato), WER medio e frasi trascritte senza errori.
@@ -117,7 +117,7 @@ def voices(cfg: Config) -> None:
     """Per ogni motore: caricamento, attesa prima che esca la prima frase, RTF sull'insieme."""
     from .tts import tts
     print(f"{'voce':<22}{'carica':>8}{'prima frase':>13}{'RTF':>7}")
-    for name in ("piper", "kokoro"):
+    for name in ("piper", "kokoro", "edge"):
         started = time.monotonic()
         engine = tts(cfg, name)
         load = time.monotonic() - started
@@ -132,7 +132,8 @@ def voices(cfg: Config) -> None:
                     first = False
                 audio += len(chunk) / 2 / engine.rate
             compute += time.monotonic() - t
-        label = f"{name} {cfg.kokoro_voice}" if name == "kokoro" else f"{name} {cfg.piper_voice.split('-')[1]}"
+        label = {"kokoro": f"kokoro {cfg.kokoro_voice}", "piper": f"piper {cfg.piper_voice.split('-')[1]}",
+                 "edge": f"edge {cfg.edge_voice.split('-')[2].removesuffix('Neural').lower()}"}[name]
         print(f"{label:<22}{load:>7.1f}s{statistics.mean(firsts) * 1000:>10.0f} ms{compute / audio:>7.2f}")
 
 
@@ -156,4 +157,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    import os
     main()
+    # onnxruntime su macOS va in crash quando libera più modelli all'uscita: si esce senza liberare niente.
+    os._exit(0)

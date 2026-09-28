@@ -89,6 +89,23 @@ class WavMic:
             time.sleep(FRAME / RATE)
 
 
+def ahead(chunks: Iterable[bytes]) -> Iterator[bytes]:
+    """Calcola i pezzi in anticipo in un altro thread: mentre suona una frase si prepara la successiva, così
+    fra una e l'altra l'altoparlante non resta a secco (con Kokoro ogni frase costa centinaia di ms)."""
+    ready: queue.Queue[bytes | None] = queue.Queue(maxsize=4)
+
+    def produce() -> None:
+        try:
+            for chunk in chunks:
+                ready.put(chunk)
+        finally:
+            ready.put(None)
+
+    threading.Thread(target=produce, daemon=True).start()
+    while (chunk := ready.get()) is not None:
+        yield chunk
+
+
 class Speaker:
     """Suona una cosa alla volta, in un thread. `stop()` interrompe (barge-in, "basta")."""
 
@@ -116,7 +133,7 @@ class Speaker:
         def run() -> None:
             interrupted = False
             try:
-                source: Iterator[bytes] = _cycle(list(chunks)) if loop else iter(chunks)
+                source: Iterator[bytes] = _cycle(list(chunks)) if loop else ahead(chunks)
                 with self._sink(rate) as write:
                     for chunk in source:
                         if stop.is_set():
@@ -167,7 +184,7 @@ class _Sink:
                 time.sleep(len(pcm) / 2 / self._rate)
             return to_file
         import sounddevice as sd
-        stream = sd.RawOutputStream(samplerate=self._rate, channels=1, dtype="int16", device=_device(self._device))
+        stream = sd.RawOutputStream(samplerate=self._rate, channels=1, dtype="int16", device=_device(self._device), latency="high")
         stream.start()
         self._stream = stream
         return lambda pcm: stream.write(pcm)

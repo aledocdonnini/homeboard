@@ -38,7 +38,7 @@ def main() -> None:
     for ext in (".onnx", ".onnx.json"):
         _get(PIPER.format(name=name, quality=quality, voice=cfg.piper_voice) + ext.removeprefix(".onnx"), cfg.models / f"{cfg.piper_voice}{ext}")
 
-    if cfg.tts == "kokoro":
+    if cfg.tts == "kokoro" or cfg.tts_fallback == "kokoro":
         (cfg.models / "kokoro").mkdir(exist_ok=True)
         for file in (cfg.kokoro_model, "voices-v1.0.bin"):
             _get(KOKORO.format(file=file), cfg.models / "kokoro" / file)

@@ -14,7 +14,7 @@ riposo ──"Ehi Roby" o tasto──▶ ascolto ──fine frase (VAD)──▶
 | `roby_voice/ears.py` | parola di attivazione (openWakeWord) e voce sì/no (Silero VAD) |
 | `roby_voice/endpoint.py` | quando hai finito di parlare (logica pura, testata) |
 | `roby_voice/stt.py` | trascrizione: `SttEngine` con Vosk e faster-whisper |
-| `roby_voice/tts.py` | sintesi, una frase alla volta: Kokoro (predefinito) o Piper |
+| `roby_voice/tts.py` | sintesi, una frase alla volta: Edge (predefinito, con cache e riserva locale), Kokoro o Piper |
 | `roby_voice/audio.py` | microfono, altoparlante interrompibile con il volume per la bocca, bip e allarme |
 | `roby_voice/link.py` | il filo con `brain` (socket Unix, JSON a righe; messaggi in `protocol.py`) |
 | `roby_voice/keys.py` | i tasti del televisore via gpio-key (`/dev/input`, libreria standard) |
@@ -35,7 +35,10 @@ roby-voice                              # microfono e altoparlante veri; brain d
 
 Configurazione con variabili d'ambiente (`roby_voice/config.py`):
 - `ROBY_STT=vosk|whisper`;
-- `ROBY_TTS=kokoro|piper`, con `ROBY_KOKORO_VOICE=if_sara|im_nicola` e `ROBY_KOKORO_SPEED`;
+- `ROBY_TTS=edge|kokoro|piper`;
+- `ROBY_EDGE_VOICE`, `ROBY_EDGE_RATE`;
+- `ROBY_TTS_FALLBACK=kokoro|none`;
+- `ROBY_KOKORO_VOICE=im_nicola|if_sara`, `ROBY_KOKORO_SPEED`;
 - `ROBY_WAKE_MODEL`, `ROBY_WAKE_THRESHOLD`;
 - `ROBY_BARGE_IN=wake|vad`;
 - `ROBY_INPUT_DEVICE` e `ROBY_OUTPUT_DEVICE`;
@@ -70,14 +73,25 @@ Con `ROBY_DEBUG=1`, `voice` stampa ogni secondo il picco del microfono e il punt
 
 ## Voce di Roby
 
-Kokoro (82M parametri, licenza Apache 2.0) ha voci italiane molto più naturali di Piper; Piper però è molto più veloce. Il confronto l'abbiamo fatto a orecchio sulle stesse frasi, e ha vinto Kokoro `if_sara`. Misure con `python -m roby_voice.bench --voci`, su 6 risposte tipiche:
+Le voci le abbiamo scelte a orecchio, sulle stesse frasi (i file si rigenerano con `bench --voci`).
+
+- **Edge TTS, voce Diego (predefinita).** Sono le voci neurali Microsoft, di gran lunga le più naturali in italiano; Giuseppe piaceva di più, ma è quasi il doppio più lento.
+  - Il servizio è gratuito ma non ufficiale, e serve internet.
+  - Il testo delle risposte va a Microsoft. L'audio del microfono no: quello non lascia mai il Pi.
+  - Ogni frase detta resta in cache (`~/.cache/roby/tts`): la seconda volta parte subito, anche senza rete.
+  - Se la rete manca, o Edge non risponde entro 3 s, quella frase la dice Kokoro. Hanno la stessa frequenza (24 kHz), quindi possono alternarsi in una risposta.
+- **Kokoro (82M parametri, licenza Apache 2.0).** Tutto in locale, voci italiane Nicola e Sara. Buona qualità, più lento di Piper.
+- **Piper.** In locale, velocissimo, voce meno riuscita.
+
+Misure con `python -m roby_voice.bench --voci`, su 6 risposte tipiche. Edge alla prima richiesta, senza cache.
 
 | voce | carica | prima frase | RTF |
 |---|---|---|---|
-| Piper `it_IT-paola-medium` | 0,5 s | 46–66 ms | 0,02 |
-| Kokoro `if_sara`, fp32 | 0,4–0,6 s | 226–255 ms | 0,13 |
+| Piper `it_IT-paola-medium` | 0,5 s | 45–66 ms | 0,02 |
+| Kokoro `im_nicola`/`if_sara`, fp32 | 0,3–0,6 s | 226–371 ms | 0,12–0,14 |
+| Edge `it-IT-DiegoNeural` | 0,3 s | ~670 ms (rete) | 0,15 |
 
-I numeri sono misurati sul Mac M-series, in nativo e in Docker Linux arm64. Sul Pi 5 ci si aspetta 4–6 volte più lento: Kokoro dovrebbe restare sotto RTF 1 (la voce è pronta prima di finire di parlare), con una prima frase entro circa un secondo. Si verifica sul Pi con lo stesso comando. Se è troppo lento, `ROBY_TTS=piper`. Il modello int8 di Kokoro sul Mac è risultato più lento del fp32: sul Pi va misurato.
+I numeri di Piper e Kokoro sono del Mac M-series. Sul Pi 5 ci si aspetta 4–6 volte più lento, quindi Kokoro dovrebbe restare sotto RTF 1. Edge dipende dalla rete, non dal Pi. Kokoro va in memoria comunque, come riserva: il modello fp32 occupa circa 325 MB. Il modello int8 sul Mac è risultato più lento del fp32; sul Pi va misurato.
 
 ## Misure della trascrizione
 

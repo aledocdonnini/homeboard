@@ -42,5 +42,7 @@ def test_audio_senza_silenzio_finale() -> None:
 
 def test_frasi_per_la_sintesi() -> None:
     from roby_voice.tts import sentences
-    assert sentences("Aggiunti: latte e uova. Da prendere: pane!") == ["Aggiunti:", "latte e uova.", "Da prendere:", "pane!"]
+    assert sentences("Aggiunti: latte e uova. Da prendere: pane!") == ["Aggiunti: latte e uova. Da prendere: pane!"]
+    long = "Il bollo auto scade tra dodici giorni, venerdì dieci ottobre. Il timer della pasta è finito, spegni il fuoco!"
+    assert sentences(long) == ["Il bollo auto scade tra dodici giorni, venerdì dieci ottobre.", "Il timer della pasta è finito, spegni il fuoco!"]
     assert sentences("Costa 10,5 euro.") == ["Costa 10,5 euro."]

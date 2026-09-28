@@ -17,9 +17,13 @@ class Config:
     stt: str = field(default_factory=lambda: _env("ROBY_STT", "vosk"))
     vosk_model: str = field(default_factory=lambda: _env("ROBY_VOSK_MODEL", "vosk-model-small-it-0.22"))
     whisper_model: str = field(default_factory=lambda: _env("ROBY_WHISPER_MODEL", "small"))
-    # Sintesi: "kokoro" (voce più naturale, predefinita) o "piper" (più veloce). Misure in README.
-    tts: str = field(default_factory=lambda: _env("ROBY_TTS", "kokoro"))
-    kokoro_voice: str = field(default_factory=lambda: _env("ROBY_KOKORO_VOICE", "if_sara"))
+    cache: Path = field(default_factory=lambda: Path(_env("ROBY_CACHE", str(Path.home() / ".cache/roby"))).expanduser())
+    # Sintesi: "edge" (voci Microsoft, serve internet; senza, parla la riserva), "kokoro" o "piper" (in locale).
+    tts: str = field(default_factory=lambda: _env("ROBY_TTS", "edge"))
+    tts_fallback: str = field(default_factory=lambda: _env("ROBY_TTS_FALLBACK", "kokoro"))
+    edge_voice: str = field(default_factory=lambda: _env("ROBY_EDGE_VOICE", "it-IT-DiegoNeural"))
+    edge_rate: str = field(default_factory=lambda: _env("ROBY_EDGE_RATE", "+0%"))
+    kokoro_voice: str = field(default_factory=lambda: _env("ROBY_KOKORO_VOICE", "im_nicola"))
     kokoro_model: str = field(default_factory=lambda: _env("ROBY_KOKORO_MODEL", "kokoro-v1.0.onnx"))
     kokoro_speed: float = field(default_factory=lambda: float(_env("ROBY_KOKORO_SPEED", "1.0")))
     piper_voice: str = field(default_factory=lambda: _env("ROBY_PIPER_VOICE", "it_IT-paola-medium"))

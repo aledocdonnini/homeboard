@@ -3,7 +3,7 @@
 #   docker build -f Dockerfile.dev -t roby-voice-dev .
 #   docker run --rm -it -v "$PWD":/src -v roby-models:/models roby-voice-dev
 FROM python:3.11-slim-bookworm
-RUN apt-get update && apt-get install -y --no-install-recommends libportaudio2 libatomic1 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libportaudio2 libatomic1 ffmpeg && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY pyproject.toml ./
 RUN mkdir roby_voice && touch roby_voice/__init__.py && pip install --no-cache-dir -e ".[audio,vosk,whisper,dev]"
