@@ -1,0 +1,144 @@
+<title>Homeboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap">
+<style>
+  :root {
+    --paper: #e6e4e0; --surface: #f4f3f0; --ink: #141414; --muted: #5f5d59;
+    --line: #cac7c1; --accent: #ff5a1f; --accent-text: #b8390a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0f0f10; --surface: #1b1b1d; --ink: #eeedea; --muted: #a09e99;
+      --line: #2e2e31; --accent: #ff6a2b; --accent-text: #ff7a3d; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0f0f10; --surface: #1b1b1d; --ink: #eeedea; --muted: #a09e99;
+    --line: #2e2e31; --accent: #ff6a2b; --accent-text: #ff7a3d; color-scheme: dark;
+  }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 16px/1.55 "Archivo", ui-sans-serif, system-ui, sans-serif;
+    padding-inline: 16px; padding-block: 40px 64px;
+    font-variant-numeric: tabular-nums;
+  }
+  main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  header { display: flex; flex-direction: column; gap: 14px; border-bottom: 4px solid var(--ink); padding-bottom: 24px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(56px, 12vw, 104px); line-height: .85; font-weight: 700; font-stretch: 75%; letter-spacing: -.03em; }
+  h1 span { color: var(--accent-text); }
+  .lede { font-size: 20px; max-width: 62ch; }
+  section { display: flex; flex-direction: column; gap: 18px; }
+  h2 { font-size: 30px; font-weight: 700; font-stretch: 85%; letter-spacing: -.01em; }
+  h2 small { display: block; font-size: 15px; font-weight: 400; font-stretch: 100%; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+  .rows { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+  .row { display: grid; grid-template-columns: 9.5rem 1fr; gap: 6px 20px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .row h3 { font-size: 17px; font-weight: 700; }
+  .row p { color: var(--ink); }
+  .say { display: block; color: var(--muted); font-size: 15px; margin-top: 3px; }
+  .say q { quotes: "«" "»"; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .priority { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: p; }
+  .priority li { counter-increment: p; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 15px; background: var(--paper); }
+  .priority li::before { content: counter(p) " "; font-weight: 700; color: var(--accent-text); font-stretch: 75%; }
+  ul.plain { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+  .table-wrap { overflow-x: auto; border-top: 4px solid var(--ink); }
+  table { width: 100%; border-collapse: collapse; min-width: 620px; font-size: 15px; }
+  th { text-align: left; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 10px 12px 8px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { font-weight: 700; width: 24%; }
+  td:last-child { color: var(--muted); }
+  .chip { display: inline-block; min-width: 1.6em; text-align: center; font-weight: 700; font-stretch: 75%; font-size: 15px; border-radius: 6px; padding: 1px 6px; border: 1px solid var(--line); }
+  .chip.s { background: var(--surface); }
+  .chip.m { background: var(--line); }
+  .chip.l { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .legend { font-size: 14px; color: var(--muted); }
+  footer { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  a { color: var(--accent-text); }
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Sintesi · a sistema installato</p>
+    <h1>Home<span>board</span></h1>
+    <p class="lede">Roby è l'assistente di casa. A casa sta in un televisore portatile Crezar degli anni '70 (Raspberry Pi 5 e monitor al posto del tubo) e ci si parla soltanto; fuori casa è sul telefono. Funziona senza costi obbligatori e, dove può, senza internet.</p>
+  </header>
+
+  <section aria-labelledby="casa">
+    <h2 id="casa">A casa, a voce<small>Si dice «Ehi Roby», oppure si preme il tasto Parla, e si chiede.</small></h2>
+    <div class="rows">
+      <div class="row"><h3>Spesa</h3><p>Aggiunge, toglie, legge la lista; per svuotarla chiede conferma.<span class="say"><q>aggiungi latte e uova</q> · <q>cosa manca da comprare?</q> · <q>togli il pane</q></span></p></div>
+      <div class="row"><h3>Timer</h3><p>Più timer con un nome; l'allarme si ferma dicendo «basta», senza parola di attivazione.<span class="say"><q>timer pasta dieci minuti</q> · <q>quanto manca al forno?</q></span></p></div>
+      <div class="row"><h3>Promemoria</h3><p>Data, ora e ricorrenze. All'ora giusta Roby lo annuncia e al telefono arriva la notifica.<span class="say"><q>ricordami domani alle nove di chiamare l'idraulico</q> · <q>ogni lunedì alle otto…</q></span></p></div>
+      <div class="row"><h3>Scadenze</h3><p>Bollette, bollo, revisione. Segnata come fatta, si rinnova da sola alla scadenza successiva.<span class="say"><q>quando scade il bollo?</q> · <q>ho pagato la bolletta della luce</q></span></p></div>
+      <div class="row"><h3>Note</h3><p>Le cose da ritrovare. Le cerca per significato e risponde con data e origine della nota.<span class="say"><q>ricorda che la chiave di scorta è da mia madre</q> · <q>dove sono le pile?</q></span></p></div>
+      <div class="row"><h3>Chiacchiere</h3><p>L'ora, la data, i saluti, cosa sa fare.<span class="say"><q>che ore sono?</q> · <q>cosa sai fare?</q></span></p></div>
+    </div>
+
+    <div class="panel">
+      <p class="eyebrow">Lo schermo</p>
+      <p>Un solo layout: a sinistra Roby animato, l'ora e lo stato del microfono (sempre visibile); a destra un pannello che mostra la cosa più importante in quel momento:</p>
+      <ol class="priority">
+        <li>timer che suona</li>
+        <li>la risposta appena data</li>
+        <li>timer attivi</li>
+        <li>promemoria o scadenza vicina</li>
+        <li>monoscopio, a riposo</li>
+      </ol>
+      <p>Effetto tubo catodico e neve a ogni cambio. Di notte «fine delle trasmissioni» e pannello spento: si riaccende da solo se Roby deve parlare.</p>
+    </div>
+
+    <ul class="plain">
+      <li><strong>Privacy.</strong> L'audio non esce mai dal Pi: la parola di attivazione, la trascrizione (Vosk) e la voce di Roby (Kokoro) sono tutte in locale. Un tasto spegne il microfono.</li>
+      <li><strong>Senza internet.</strong> Timer, spesa e liste funzionano lo stesso; al ritorno della rete si sincronizza tutto.</li>
+      <li><strong>Da solo.</strong> Riavvio automatico dopo un crash o un blocco, aggiornamento del software ogni notte.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="telefono">
+    <h2 id="telefono">Sul telefono<small>La PWA, installabile sulla schermata home. Stessi dati, in tempo reale.</small></h2>
+    <div class="rows">
+      <div class="row"><h3>Oggi</h3><p>Il cruscotto della giornata e il campo «Chiedi a Roby»: si scrive o si parla, e capisce le stesse frasi della TV.</p></div>
+      <div class="row"><h3>Spesa</h3><p>Condivisa fra i membri della casa e utilizzabile offline al supermercato; reparti, suggerimenti, riordino.</p></div>
+      <div class="row"><h3>Timer</h3><p>Quelli di casa, con il conto alla rovescia, visti anche da fuori.</p></div>
+      <div class="row"><h3>Promemoria, scadenze</h3><p>Crea, modifica, segna fatta; notifiche push all'ora e con l'anticipo scelti.</p></div>
+      <div class="row"><h3>Note</h3><p>Scritte, dettate a Roby o condivise da un'altra app (su Android: Condividi → Homeboard).</p></div>
+      <div class="row"><h3>Impostazioni</h3><p>La casa, i membri (solo su invito del proprietario), l'abbinamento della TV con un codice.</p></div>
+    </div>
+    <p class="legend">Facoltativo: un modello linguistico per le frasi che le regole non capiscono (Ollama in casa, oppure Groq o Gemini gratis). Spento di default; le note restano in casa a meno di un permesso esplicito.</p>
+  </section>
+
+  <section aria-labelledby="idee">
+    <h2 id="idee">Altro che potrebbe fare<small>Idee per dopo, con quanto costano in lavoro e a cosa fare attenzione.</small></h2>
+    <p class="legend">Impegno: <span class="chip s">S</span> un giorno o due · <span class="chip m">M</span> qualche giorno · <span class="chip l">L</span> una settimana o più</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Idea</th><th>Come</th><th>Impegno</th><th>Attenzione</th></tr></thead>
+        <tbody>
+          <tr><td>Spotify</td><td>«Metti la playlist del sabato»: il Pi diventa un altoparlante Spotify Connect (librespot) e Roby lo comanda con le API di Spotify.</td><td><span class="chip m">M</span></td><td>Serve Spotify Premium.</td></tr>
+          <tr><td>Radio</td><td>«Metti Radio 2»: stream delle radio italiane, volume e stop a voce.</td><td><span class="chip s">S</span></td><td>Gratis; gli indirizzi degli stream a volte cambiano.</td></tr>
+          <tr><td>Carrello Amazon</td><td>Aggiungere davvero al carrello non si può: Amazon non ha API pubbliche per farlo. Si può mandare al telefono la lista della spesa come link di ricerca Amazon, da confermare lì.</td><td><span class="chip m">M</span></td><td>Automatizzare il sito viola i termini d'uso e si rompe spesso.</td></tr>
+          <tr><td>Spesa online</td><td>Lista pronta da incollare o inviare al servizio che usi (Esselunga, Carrefour…).</td><td><span class="chip s">S</span></td><td>Nessuno ha API pubbliche: è un aiuto, non un ordine automatico.</td></tr>
+          <tr><td>Meteo</td><td>«Che tempo fa domani?», con un pannello meteo sullo schermo (Open-Meteo, gratuito).</td><td><span class="chip s">S</span></td><td>Serve internet.</td></tr>
+          <tr><td>Buongiorno</td><td>Riepilogo del mattino: meteo, promemoria, scadenze, spesa. A orario fisso o dicendo «buongiorno».</td><td><span class="chip s">S</span></td><td>Nessuno.</td></tr>
+          <tr><td>Luci e casa smart</td><td>«Accendi la luce del salotto», scene, termostato, tramite Home Assistant.</td><td><span class="chip m">M</span></td><td>Serve Home Assistant con i dispositivi già collegati.</td></tr>
+          <tr><td>Messaggi in famiglia</td><td>«Di' ad Anna che arrivo tardi»: notifica sul suo telefono; e al contrario, un messaggio dal telefono letto da Roby in casa.</td><td><span class="chip s">S</span></td><td>Le notifiche ci sono già; attenzione a chi può scrivere a chi.</td></tr>
+          <tr><td>Calendario</td><td>«Cosa c'è domani?» dal calendario di famiglia (Google o CalDAV).</td><td><span class="chip m">M</span></td><td>Accesso al calendario: dati personali.</td></tr>
+          <tr><td>Ricette passo passo</td><td>«Prossimo passo», con i timer che partono da soli al momento giusto.</td><td><span class="chip m">M</span></td><td>Le ricette vanno salvate in un formato che Roby sappia leggere.</td></tr>
+          <tr><td>Menu della settimana</td><td>Dai pasti decisi alla lista della spesa, già divisa per reparto.</td><td><span class="chip m">M</span></td><td>Meglio con il modello linguistico acceso.</td></tr>
+          <tr><td>Notizie</td><td>Titoli del giornale radio o di feed RSS letti da Roby.</td><td><span class="chip s">S</span></td><td>Solo fonti con RSS pubblico.</td></tr>
+          <tr><td>Chromecast e TV</td><td>«Pausa», «metti YouTube sulla TV del salotto».</td><td><span class="chip m">M</span></td><td>Funziona bene solo con alcune app.</td></tr>
+          <tr><td>Chi è in casa</td><td>Sa chi è rientrato (telefono sulla rete di casa) e personalizza saluti e promemoria.</td><td><span class="chip m">M</span></td><td>Delicato per la privacy di tutti: solo con il consenso di ognuno.</td></tr>
+          <tr><td>Riconoscere chi parla</td><td>Promemoria e note «di Anna» o «di Luca» a seconda della voce.</td><td><span class="chip l">L</span></td><td>Poco affidabile con modelli piccoli e rumore di casa.</td></tr>
+          <tr><td>Campanello</td><td>Chi suona alla porta compare sullo schermo della Crezar.</td><td><span class="chip l">L</span></td><td>Dipende dal campanello: serve un modello che esponga il video.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Codice e dettagli nel repository: README principale, <code>device/</code> per il Raspberry, <code>services/voice</code> per la voce.</footer>
+</main>
