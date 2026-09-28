@@ -70,8 +70,10 @@ function say(text: string, listen = false) {
   if (!voice) return; // sul Mac senza voice: resta il testo sullo schermo
   toVoice({ type: "say", id: randomUUID(), text, ...(listen ? { listen } : {}) });
 }
-if (existsSync(VOICE_SOCKET)) rmSync(VOICE_SOCKET);
-createServer((socket) => {
+// Socket Unix sul Pi; tcp://host:porta per voice in Docker sul Mac (un socket Unix dell'host lì non arriva).
+const tcp = VOICE_SOCKET.match(/^tcp:\/\/(.+):(\d+)$/);
+if (!tcp && existsSync(VOICE_SOCKET)) rmSync(VOICE_SOCKET);
+const voiceServer = createServer((socket) => {
   voice?.destroy();
   voice = socket;
   console.log("voice collegato");
@@ -85,7 +87,9 @@ createServer((socket) => {
     redraw();
   });
   socket.on("error", () => {});
-}).listen(VOICE_SOCKET);
+});
+if (tcp) voiceServer.listen(Number(tcp[2]), tcp[1]);
+else voiceServer.listen(VOICE_SOCKET);
 
 function onVoice(msg: VoiceToBrain) {
   switch (msg.type) {

@@ -83,6 +83,11 @@ const CORPUS: [string, Intent, Partial<Context>?][] = [
   ["imposta un conto alla rovescia di 3 minuti", timer(180)],
   ["timer tè 4 minuti", timer(240, "tè")],
   ["timer di 90 secondi", timer(90)],
+  // Come li trascrive Vosk (bench di services/voice).
+  ["time passa dieci minuti", timer(600, "passa")],
+  ["metti un team di venti minuti per il forno", timer(1200, "forno")],
+  ["quanto manca time", { type: "timer.query" }],
+  ["ferma il time", { type: "timer.stop" }],
   ["quanto manca al timer?", { type: "timer.query" }],
   ["quanto manca?", { type: "timer.query" }],
   ["quanto manca al timer della pasta", { type: "timer.query", label: "pasta" }],

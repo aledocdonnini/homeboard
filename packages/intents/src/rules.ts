@@ -32,7 +32,8 @@ function confirmation(t: string): Intent | null {
 
 // ——— Timer ————————————————————————————————————————————————————————————————————
 
-const TIMER = String.raw`(?:timer|conto alla rovescia|countdown)`;
+// "Timer" è una parola inglese: la trascrizione italiana (Vosk) la sente spesso come "time", "team", "taimer".
+const TIMER = String.raw`(?:timer|taimer|time|team|t'aime|conto alla rovescia|countdown)`;
 const known = (said: string, names: string[] = []) => names.find((n) => sameThing(said, n));
 
 function timer(u: Utterance, ctx: Context): Intent | null {

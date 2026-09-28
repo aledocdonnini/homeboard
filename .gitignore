@@ -13,3 +13,6 @@ design/
 __pycache__/
 .mypy_cache/
 .venv/
+.pytest_cache/
+services/voice/bench/registrate/
+*.egg-info/

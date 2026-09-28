@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "roby-voice"
 version = "0.1.0"
@@ -6,11 +10,21 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-# Si installano sul Pi (fase 5); il pacchetto base resta importabile anche senza.
-audio = ["openwakeword", "sounddevice", "numpy", "piper-tts"]
-vosk = ["vosk"]
-whisper = ["faster-whisper"]
-dev = ["mypy", "pytest"]
+# Il pacchetto base (protocollo, logica pura, test) non ha dipendenze; l'audio sì.
+audio = ["numpy>=1.26", "sounddevice>=0.4", "openwakeword>=0.6", "piper-tts>=1.3"]
+vosk = ["vosk>=0.3.45"]
+whisper = ["faster-whisper>=1.1"]
+dev = ["mypy>=1.10", "pytest>=8"]
+
+[project.scripts]
+roby-voice = "roby_voice.main:main"
+
+[tool.setuptools]
+packages = ["roby_voice"]
 
 [tool.mypy]
 strict = true
+# Le librerie audio non hanno tipi: si usano dietro interfacce nostre, tipizzate.
+[[tool.mypy.overrides]]
+module = ["openwakeword.*", "sounddevice", "vosk", "faster_whisper", "piper.*", "scipy.*"]
+ignore_missing_imports = true

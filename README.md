@@ -104,6 +104,7 @@ npm run dev                                                       # la PWA su ht
 ```
 
 - **Accesso:** l'email con il codice arriva in Mailpit, su <http://127.0.0.1:54324>.
+- **La voce** (parola di attivazione, trascrizione, Piper; in Docker senza microfono, e le misure dei motori): vedi [`services/voice/README.md`](services/voice/README.md).
 - **La postazione con brain vero** (Supabase locale, abbinamento dalla PWA): vedi [`services/brain/README.md`](services/brain/README.md).
 - **La postazione:** senza Raspberry si prova col simulatore di brain, che usa l'interprete vero:
   ```bash
