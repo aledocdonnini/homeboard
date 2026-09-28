@@ -22,6 +22,7 @@ import { execute, openDeadlines } from "./executor.ts";
 import { dueBetween, homeState, type Household, type Live } from "./state.ts";
 import { Store } from "./store.ts";
 import { Timers } from "./timers.ts";
+import { index, loadEmbedder, type Embedder } from "./notes.ts";
 
 // ——— Configurazione (variabili d'ambiente, o services/brain/.env) ———
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -147,7 +148,7 @@ async function hear(said: string) {
     return answer(said, "Tolgo tutto dalla lista della spesa? Dimmi sì o no.", { kind: "text" }, true);
   }
   pending = null;
-  const result = execute(todo, { store, timers, householdId: house.id, timezone: house.timezone, now });
+  const result = await execute(todo, { store, timers, householdId: house.id, timezone: house.timezone, now, embedder });
   answer(said, result.reply, result.panel);
   if (todo.type.startsWith("timer.")) {
     toVoice({ type: "alarm", on: timers.ringing }); // "basta": l'allarme si spegne subito
@@ -188,9 +189,31 @@ setInterval(() => {
   }
 }, 250);
 
+// ——— Note: il modello degli embedding si carica in background (la prima volta si scarica) ———
+let embedder: Embedder | null = null;
+async function indexNotes() {
+  if (!embedder || !store.get("household")) return;
+  try {
+    const n = await index(store, embedder);
+    if (n) {
+      console.log(`Note indicizzate: ${n}`);
+      void cloud.sync();
+    }
+  } catch (e) {
+    console.warn("Indicizzazione delle note non riuscita:", (e as Error).message);
+  }
+}
+loadEmbedder()
+  .then((e) => { embedder = e; console.log("Ricerca nelle note per significato: pronta."); void indexNotes(); })
+  .catch((e) => console.warn("Modello delle note non disponibile, cerco per parole:", (e as Error).message));
+setInterval(() => void indexNotes(), 30_000);
+
 // ——— Supabase ———
 const cloud = new Cloud(store, env("SUPABASE_URL"), env("SUPABASE_PUBLISHABLE_KEY"), {
-  changed: redraw,
+  changed() {
+    redraw();
+    void indexNotes(); // note nuove o cambiate, anche dal telefono
+  },
   arrived(name) {
     live.arrivedAt = new Date().toISOString();
     if (!night()) say(`In lista: ${name.charAt(0).toLowerCase()}${name.slice(1)}.`); // di notte non si sveglia nessuno

@@ -8,6 +8,7 @@ import { addDays, daysBetween, describe, nextOccurrence, nextReminderAt, zonedDa
 import { secondsLeft, spoken } from "@homeboard/core/timers";
 import { sameThing, smalltalkReply, type Intent } from "@homeboard/intents";
 import type { BrainOp, Row, Store } from "./store.ts";
+import { cite, search, SURE, type Embedder } from "./notes.ts";
 import type { Timers } from "./timers.ts";
 
 export type Result = {
@@ -16,7 +17,11 @@ export type Result = {
   panel: AnswerPanel | null;
 };
 
-export type Ctx = { store: Store; timers: Timers; householdId: string; timezone: string; now: Date };
+export type Ctx = {
+  store: Store; timers: Timers; householdId: string; timezone: string; now: Date;
+  /** Il modello per cercare le note per significato; null finché non è pronto (si cerca per parole). */
+  embedder?: Embedder | null;
+};
 
 const and = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs.at(-1)}`);
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -35,7 +40,7 @@ export const shoppingList = (store: Store) =>
 export const openDeadlines = (store: Store) =>
   store.live("deadlines").filter((d) => !d.done_at).sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
 
-export function execute(intent: Intent, { store, timers, householdId, timezone, now }: Ctx): Result {
+export async function execute(intent: Intent, { store, timers, householdId, timezone, now, embedder = null }: Ctx): Promise<Result> {
   const today = zonedDate(now, timezone);
   const ops: BrainOp[] = [];
   const done = (r: Result) => {
@@ -148,15 +153,9 @@ export function execute(intent: Intent, { store, timers, householdId, timezone, 
       return done({ reply: "Me lo ricordo.", panel: { kind: "note", body: intent.body } });
     }
     case "note.ask": {
-      // ponytail: per parole (le più in comune vincono), finché non arriva la ricerca per significato (fase 7).
-      const words = intent.question.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 3);
-      const scored = store.live("notes")
-        .map((n) => ({ n, score: words.filter((w) => sameThing(w, String(n.body))).length }))
-        .filter((x) => x.score > 0)
-        .sort((a, b) => b.score - a.score || String(b.n.created_at).localeCompare(String(a.n.created_at)));
-      const best = scored[0]?.n;
-      return best
-        ? { reply: `Mi hai detto: ${lower(String(best.body))}`, panel: { kind: "note", body: String(best.body) } }
+      const found = await search(store, intent.question, embedder);
+      return found
+        ? { reply: cite(found.note, now, timezone, found.score < SURE), panel: { kind: "note", body: String(found.note.body) } }
         : { reply: "Non ho niente annotato su questo.", panel: { kind: "text" } };
     }
 
@@ -164,11 +163,16 @@ export function execute(intent: Intent, { store, timers, householdId, timezone, 
       return { reply: smalltalkReply(intent.topic, now, timezone), panel: null };
     case "confirm": case "cancel":
       return { reply: "Non c'era niente da confermare.", panel: null };
-    case "unknown":
+    case "unknown": {
+      // Una domanda libera che le regole non riconoscono ("cosa mi serve per il tiramisù?") può avere la
+      // risposta in una nota: se ce n'è una abbastanza pertinente, Roby risponde con quella.
+      const found = intent.text.trim() ? await search(store, intent.text, embedder) : null;
+      if (found) return { reply: cite(found.note, now, timezone, found.score < SURE), panel: { kind: "note", body: String(found.note.body) } };
       if (intent.text.trim()) {
         ops.push({ table: "unparsed_log", kind: "insert", itemId: randomUUID(), row: { household_id: householdId, text: intent.text.slice(0, 500), source: "voce" } });
       }
       return done({ reply: "Scusa, non ho capito.", panel: { kind: "text" } });
+    }
   }
 }
 

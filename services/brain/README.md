@@ -33,9 +33,27 @@ Senza `voice` collegato, le frasi si scrivono nel terminale, una per riga. Ci so
 | `src/cloud.ts` | Supabase: sessione, abbinamento, invio della coda, download, realtime, battito, copia dei timer |
 | `src/executor.ts` | dall'intento all'azione, con la frase da dire e il pannello da mostrare |
 | `src/timers.ts` | i timer, salvati in locale |
+| `src/notes.ts` | il second brain: embedding delle note, ricerca per significato, risposta con data e origine |
 | `src/state.ts` | lo stato di `/casa`; i promemoria da annunciare |
 
 Test: `npm test` dalla radice (copia locale ed esecutore, su SQLite in memoria).
+
+## Note: il second brain
+
+"Ricorda che le batterie di ricambio sono nel cassetto" e poi "dove sono le pile?". `brain` ritrova le note per significato, anche senza internet.
+
+- **Embedding.** Il modello è `paraphrase-multilingual-MiniLM-L12-v2`: 384 dimensioni, circa 120 MB quantizzato, circa 1 ms a frase sul Mac, con transformers.js. Ogni nota ha il suo embedding nella copia locale, e una copia va nella colonna pgvector `notes.embedding` in Supabase. Il modello lo scarica `device/install.sh`; sul Mac si scarica la prima volta.
+- **Punteggio.** Somiglianza di significato, più 0,1 per ogni parola significativa in comune.
+  - Sotto 0,45: "Non ho niente annotato su questo".
+  - Fra 0,45 e 0,6: Roby risponde, ma con "Forse intendi questo".
+  - Senza modello: si cerca solo per parole.
+- **Risposta.** È la nota stessa, con data e origine: "Il 12 marzo mi hai detto: …", "Ieri hai scritto: …", "Oggi hai salvato: …" (dal telefono, con Condividi). Nella Fase 8 un modello linguistico potrà rispondere con parole sue, basandosi solo sulle note trovate e citandole: l'interfaccia è `Answerer`.
+- **Domande libere.** Una frase che le regole non capiscono, per esempio "cosa mi serve per il tiramisù?", si cerca comunque fra le note prima di rispondere "non ho capito".
+- **Valutazione.** `npm run eval:note -w @homeboard/brain` gira col modello vero su note e domande di casa: 14 risposte giuste su 16.
+  - "Quando scade la patente?" trova la garanzia della lavatrice, ma la dice con "forse".
+  - "Dove ho messo il caricabatterie?" trova le batterie con sicurezza. È un limite del modello piccolo.
+
+La PWA non calcola embedding: servirebbero 120 MB sul telefono. Lì la ricerca resta per parole, sul server (full-text in italiano).
 
 ## Simulatore
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
@@ -26,6 +26,22 @@ export default function Notes({ householdId }: { householdId: string }) {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Note | null>(null);
   const [busy, setBusy] = useState(false);
+  // Arrivata con "Condividi → Homeboard" (Web Share Target, manifest.ts): la nota è già scritta, basta salvarla.
+  const [shared, setShared] = useState(false);
+  const field = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    const parts = [q.get("titolo"), q.get("testo"), q.get("link")].map((p) => p?.trim()).filter(Boolean);
+    if (!parts.length) return;
+    // Il titolo spesso è già dentro il testo condiviso: non si ripete.
+    const unique = parts.filter((p, i) => !parts.some((o, j) => j !== i && o!.includes(p!) && o !== p));
+    Promise.resolve().then(() => {
+      setText([...new Set(unique)].join("\n"));
+      setShared(true);
+      field.current?.focus();
+    });
+    history.replaceState(null, "", "/note");
+  }, []);
 
   // Ricerca sul dispositivo, anche offline: tutte le parole cercate devono comparire.
   const words = fold(query).split(/\s+/).filter(Boolean);
@@ -36,10 +52,11 @@ export default function Notes({ householdId }: { householdId: string }) {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.from("notes").insert({ household_id: householdId, body: text.trim(), source: "pwa" });
+    const { error } = await supabase.from("notes").insert({ household_id: householdId, body: text.trim(), source: shared ? "share" : "pwa" });
     setBusy(false);
     if (error) return setError(error.message);
     setText("");
+    setShared(false);
     void reload();
   }
 
@@ -53,9 +70,9 @@ export default function Notes({ householdId }: { householdId: string }) {
       </PageHeader>
 
       <form onSubmit={save} className="flex flex-col gap-3">
-        <label htmlFor="note" className="font-semibold">Nuova nota</label>
+        <label htmlFor="note" className="font-semibold">{shared ? "Nota condivisa: controlla e salva" : "Nuova nota"}</label>
         <textarea
-          id="note" value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={4000}
+          ref={field} id="note" value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={4000}
           placeholder="Il codice del cancello è 4512"
           className="rounded-control border border-edge bg-surface px-4 py-3 text-lg"
         />

@@ -117,6 +117,8 @@ install_node() {
 deps() {
   step "Dipendenze di brain (solo quelle: la PWA sta su Vercel)"
   (cd "$REPO" && PATH="$NODE_HOME/bin:$PATH" npm ci --omit=dev --no-audit --no-fund -w @homeboard/brain)
+  # Il modello delle note (ricerca per significato, ~120 MB): scaricato adesso, poi funziona offline.
+  (cd "$REPO/services/brain" && "$NODE_HOME/bin/node" --disable-warning=ExperimentalWarning src/fetch-model.ts)
 
   step "voice: ambiente Python in $VENV e modelli (Vosk, Kokoro, openWakeWord: circa 500 MB la prima volta)"
   [[ -x "$VENV/bin/python" ]] || python3 -m venv "$VENV"

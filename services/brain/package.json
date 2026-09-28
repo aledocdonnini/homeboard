@@ -10,11 +10,13 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning src/main.ts",
     "simulate": "node src/simulator.ts",
-    "typecheck": "tsc -p . --noEmit"
+    "typecheck": "tsc -p . --noEmit",
+    "eval:note": "node --disable-warning=ExperimentalWarning src/eval-notes.ts"
   },
   "dependencies": {
     "@homeboard/core": "*",
     "@homeboard/intents": "*",
+    "@huggingface/transformers": "^4.3.0",
     "@supabase/supabase-js": "^2.117.2",
     "ws": "^8.22.0"
   },
