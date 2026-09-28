@@ -144,10 +144,3 @@
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
-
-/* Su desktop la navigazione è una colonna a destra, dentro la zona sicura: le pagine che la hanno le fanno spazio. */
-@media (min-width: 1024px) {
-  body:has(nav[data-rail]) {
-    padding-right: calc(7rem + var(--overscan));
-  }
-}

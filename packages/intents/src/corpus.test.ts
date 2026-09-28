@@ -192,6 +192,21 @@ const CORPUS: [string, Intent, Partial<Context>?][] = [
   ["cosa?", unknown("cosa?")],
   ["allora", unknown("allora")],
 
+  // ——— Viste: cambiano la parte centrale dello schermo ———
+  ["mostrami i promemoria", { type: "show", view: "reminders" }],
+  ["fammi vedere la spesa", { type: "show", view: "shopping" }],
+  ["mostrami la lista della spesa", { type: "show", view: "shopping" }],
+  ["apri le scadenze", { type: "show", view: "deadlines" }],
+  ["fammi vedere le note", { type: "show", view: "notes" }],
+  ["mostrami i timer", { type: "show", view: "timers" }],
+  ["torna a oggi", { type: "show", view: "today" }],
+  ["cosa c'è oggi?", { type: "show", view: "today" }],
+  ["cosa devo fare oggi", { type: "show", view: "today" }],
+  ["che promemoria ho?", { type: "show", view: "reminders" }],
+  ["ehi roby mostrami le mie note", { type: "show", view: "notes" }],
+  ["apri le impostazioni", { type: "show", view: "settings" }],
+  ["mostrami il gatto", unknown("mostrami il gatto")],
+
   // ——— Chiacchiere e resti della parola di attivazione ———
   ["hai aggiungi il latte", add("Latte")],
   ["ehi allora aggiungi il pane", add("Pane")],

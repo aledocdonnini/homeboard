@@ -6,6 +6,9 @@ import type { Answer, HomeState, HomeTimer } from "./protocol.ts";
 
 /** La risposta a una richiesta resta sullo schermo per mezzo minuto, poi torna il resto. */
 export const ANSWER_MS = 30_000;
+/** Una vista chiesta apposta ("mostrami la spesa") resta un minuto: la si guarda, non la si ascolta. */
+export const VIEW_MS = 60_000;
+const VIEWS = new Set(["today", "timers", "deadlines", "reminders", "notes", "shopping"]);
 /** Un promemoria entro un'ora, o una scadenza entro tre giorni (o superata), va in primo piano. */
 export const SOON_MINUTES = 60;
 export const WORRY_DAYS = 3;
@@ -49,15 +52,17 @@ function soon(s: HomeState, now: Date, tz: string): Soon | null {
 
 /**
  * Il pannello centrale, in ordine di priorità:
- * 1. un timer che suona; 2. la risposta appena data (per ANSWER_MS); di notte, se nessuno parla con Roby,
+ * 1. un timer che suona; 2. la risposta appena data (ANSWER_MS, o VIEW_MS per una vista chiesta); di notte, se nessuno parla con Roby,
  * "fine delle trasmissioni"; 3. i timer attivi; 4. un promemoria imminente o una scadenza vicina; 5. il monoscopio.
  */
-export function pickPanel(s: HomeState, now: Date): Panel {
+export function pickPanel(s: HomeState, now: Date, { sticky = false } = {}): Panel {
   if (!s.household) return { kind: "pairing" };
   const tz = s.household.timezone;
   const ringing = s.timers.find((t) => t.status === "ringing");
   if (ringing) return { kind: "ringing", timer: ringing };
-  if (s.answer && now.getTime() - new Date(s.answer.at).getTime() < ANSWER_MS) return { kind: "answer", answer: s.answer };
+  // sticky (il computer): la vista chiesta resta finché non se ne chiede un'altra.
+  const ttl = sticky ? Infinity : VIEWS.has(s.answer?.panel.kind ?? "") ? VIEW_MS : ANSWER_MS;
+  if (s.answer && now.getTime() - new Date(s.answer.at).getTime() < ttl) return { kind: "answer", answer: s.answer };
   if (s.activity === "idle" && isNight(clock(now, tz), s.household.nightStart, s.household.nightEnd)) return { kind: "night" };
   const running = s.timers.filter((t) => t.status === "running").sort((a, b) => a.endsAt.localeCompare(b.endsAt));
   if (running.length) return { kind: "timers", timers: running };

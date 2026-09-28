@@ -4,6 +4,7 @@ import { renderSVG } from "uqr";
 import type { Answer, HomeState, HomeTimer } from "@homeboard/core/protocol";
 import type { Panel, Soon } from "@homeboard/core/station";
 import { countdown, secondsLeft } from "@homeboard/core/timers";
+import { addDays, daysBetween, zonedDate } from "@homeboard/core/recurrence";
 import Big from "@/components/dash/Big";
 import TickRuler from "@/components/dash/TickRuler";
 import Monoscope from "./Monoscope";
@@ -18,7 +19,13 @@ export default function PanelView({ panel, state, now }: { panel: Panel; state: 
   switch (panel.kind) {
     case "pairing": return <Pairing code={state.pairing?.code ?? ""} />;
     case "ringing": return <Ringing timer={panel.timer} />;
-    case "answer": return <AnswerPanel answer={panel.answer} />;
+    case "answer": {
+      const view = panel.answer.panel;
+      if (view.kind === "today" || view.kind === "timers" || view.kind === "deadlines" || view.kind === "reminders" || view.kind === "notes") {
+        return <ViewPanel view={view} state={state} now={now} />;
+      }
+      return <AnswerPanel answer={panel.answer} />;
+    }
     case "timers": return <Timers timers={panel.timers} now={now} />;
     case "soon": return <SoonPanel soon={panel.soon} />;
     case "idle": case "night":
@@ -145,3 +152,122 @@ function Pairing({ code }: { code: string }) {
     </div>
   );
 }
+
+// ——— Viste chieste a voce ("mostrami i promemoria") ————————————————————————————————
+
+type View = Extract<Answer["panel"], { kind: "today" | "timers" | "deadlines" | "reminders" | "notes" }>;
+
+const Heading = ({ children, count }: { children: string; count?: number }) => (
+  <p className="flex items-end gap-6">
+    {count !== undefined && <Big className="text-[clamp(7rem,11vw,11rem)]">{two(count)}</Big>}
+    <span className="pb-3 text-4xl text-muted">{children}</span>
+  </p>
+);
+
+function ViewPanel({ view, state, now }: { view: View; state: HomeState; now: Date }) {
+  const tz = state.household?.timezone ?? "Europe/Rome";
+  const today = zonedDate(now, tz), tomorrow = addDays(today, 1);
+  const hhmm = (iso: string) => new Date(iso).toLocaleTimeString("it-IT", { timeZone: tz, hour: "2-digit", minute: "2-digit" });
+  const dayOf = (iso: string) => {
+    const d = zonedDate(new Date(iso), tz);
+    return d === today ? "oggi" : d === tomorrow ? "domani" : toDate(d).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+  };
+  const deadlines = state.deadlines.map((d) => ({ ...d, left: daysBetween(today, d.due) }));
+
+  if (view.kind === "timers") {
+    return state.timers.length ? <Timers timers={state.timers} now={now} /> : <Empty title="Nessun timer" hint="Di' «timer pasta dieci minuti»." />;
+  }
+
+  if (view.kind === "reminders") {
+    if (!view.items.length) return <Empty title="Nessun promemoria" hint="Di' «ricordami domani alle nove di…»." />;
+    return (
+      <div className="flex h-full flex-col justify-center gap-6">
+        <Heading count={view.items.length}>promemoria in arrivo</Heading>
+        <ul className="border-t-4 border-ink">
+          {view.items.slice(0, 7).map((r) => (
+            <li key={r.title + r.at} className="flex items-baseline gap-8 border-b border-line py-4">
+              <span className="w-[5ch] shrink-0 text-5xl font-semibold tracking-[-0.04em]">{hhmm(r.at)}</span>
+              <span className="flex flex-col">
+                <span className="text-4xl font-medium">{r.title}</span>
+                <span className="text-2xl text-muted">{dayOf(r.at)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (view.kind === "deadlines") {
+    if (!deadlines.length) return <Empty title="Nessuna scadenza" hint="Bollette, bollo, revisione: aggiungile dal telefono." />;
+    return (
+      <div className="flex h-full flex-col justify-center gap-6">
+        <Heading count={deadlines.length}>{deadlines.length === 1 ? "scadenza" : "scadenze"}</Heading>
+        <ul className="border-t-4 border-ink">
+          {deadlines.slice(0, 6).map((d) => (
+            <li key={d.title + d.due} className="flex items-baseline gap-8 border-b border-line py-4">
+              <span className={`w-[2.4ch] shrink-0 text-6xl font-semibold tracking-[-0.04em] ${d.left <= 7 ? "text-accent-text" : ""}`}>{two(d.left)}</span>
+              <span className="flex flex-col">
+                <span className="text-4xl font-medium">{d.title}</span>
+                <span className="text-2xl text-muted">{days(d.left)}, {toDate(d.due).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (view.kind === "notes") {
+    if (!view.items.length) return <Empty title="Nessuna nota" hint="Di' «ricorda che la chiave di scorta è da mia madre»." />;
+    return (
+      <div className="flex h-full flex-col justify-center gap-6">
+        <Heading>ultime note</Heading>
+        <ul className="border-t-4 border-ink">
+          {view.items.slice(0, 6).map((n) => (
+            <li key={n.body} className="flex flex-col gap-1 border-b border-line py-4">
+              <span className="text-4xl leading-tight font-medium">{n.body}</span>
+              <span className="text-2xl text-muted">{n.when}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  // Oggi: il riepilogo della giornata.
+  const todays = state.reminders.filter((r) => zonedDate(new Date(r.at), tz) === today);
+  const close = deadlines.filter((d) => d.left <= 7);
+  return (
+    <div className="flex h-full flex-col justify-center gap-10">
+      <p className="text-5xl font-semibold tracking-tight capitalize">{now.toLocaleDateString("it-IT", { timeZone: tz, weekday: "long", day: "numeric", month: "long" })}</p>
+      <section className="flex flex-col border-t-4 border-ink">
+        {todays.length ? todays.map((r) => (
+          <p key={r.title + r.at} className="flex items-baseline gap-8 border-b border-line py-4">
+            <span className="w-[5ch] text-5xl font-semibold tracking-[-0.04em]">{hhmm(r.at)}</span>
+            <span className="text-4xl">{r.title}</span>
+          </p>
+        )) : <p className="border-b border-line py-4 text-3xl text-muted">Nessun promemoria oggi.</p>}
+      </section>
+      <div className="grid grid-cols-3 gap-8">
+        <Figure value={state.shopping.length} label="da comprare" />
+        <Figure value={close.length} label={close.length === 1 ? "scadenza vicina" : "scadenze vicine"} accent={close.length > 0} />
+        <Figure value={state.timers.length} label={state.timers.length === 1 ? "timer attivo" : "timer attivi"} />
+      </div>
+    </div>
+  );
+}
+
+const Figure = ({ value, label, accent = false }: { value: number; label: string; accent?: boolean }) => (
+  <p className="flex flex-col gap-1 border-t border-line pt-4">
+    <Big className={`text-8xl ${accent ? "text-accent-text" : ""}`}>{two(value)}</Big>
+    <span className="text-2xl text-muted">{label}</span>
+  </p>
+);
+
+const Empty = ({ title, hint }: { title: string; hint: string }) => (
+  <div className="flex h-full flex-col justify-center gap-4">
+    <p className="text-6xl font-semibold tracking-tight">{title}</p>
+    <p className="text-3xl text-muted">{hint}</p>
+  </div>
+);

@@ -1,24 +1,40 @@
 "use client";
 
 import { useState } from "react";
+import type { Answer, AnswerPanel } from "@homeboard/core/protocol";
 import { addDays, describe, nextReminderAt, zonedDate } from "@homeboard/core/recurrence";
+import { secondsLeft, spoken } from "@homeboard/core/timers";
 import { DESTRUCTIVE, Intent, parse, sameThing, smalltalkReply, type Context } from "@homeboard/intents";
 import { supabase } from "@/lib/supabase";
 import { nextDue, open, shortDate, whenLabel, type Deadline } from "@/features/deadlines/due";
-import { dayLabel } from "@/features/reminders/schedule";
+import { dayLabel, upcoming, type Reminder } from "@/features/reminders/schedule";
 import type { useShoppingList } from "@/features/shopping/useShoppingList";
 import type { Timer } from "@/features/timers/useTimers";
-import { secondsLeft, spoken } from "@homeboard/core/timers";
 
-export type Reply = { text: string; href?: string; tone?: "ok" | "question" | "error" };
+export type View = Extract<Intent, { type: "show" }>["view"];
+export type Reply = {
+  text: string;
+  /** La sezione della risposta: sul telefono ci si va (le viste la aprono da sole). */
+  href?: string;
+  /** Cosa mostrare al centro sul computer (come /casa sulla TV). */
+  panel?: AnswerPanel;
+  tone?: "ok" | "question" | "error";
+  /** Una vista chiesta ("mostrami la spesa"): sul telefono si apre la sezione invece di rispondere. */
+  go?: boolean;
+};
 
 type Deps = {
   householdId: string;
   tz: string;
   list: ReturnType<typeof useShoppingList>;
+  reminders: Reminder[];
   deadlines: Deadline[];
   timers: Timer[];
   reload: () => void;
+};
+
+export const HREF: Record<View, string> = {
+  today: "/", shopping: "/spesa", timers: "/timer", reminders: "/promemoria", deadlines: "/scadenze", notes: "/note", settings: "/impostazioni",
 };
 
 /** false quando il server ha detto che il modello linguistico è spento (501): non si chiede più. */
@@ -50,16 +66,58 @@ async function askServer(text: string, ctx: Context): Promise<Intent | null> {
 // "latte, uova e pane"
 const and = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs.at(-1)}`);
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
 
 /**
  * Il campo unico della PWA: la stessa interpretazione del Raspberry (@homeboard/intents), eseguita con i moduli
  * della PWA. La spesa funziona anche offline (coda); promemoria, scadenze e note chiedono la rete.
- * Le azioni distruttive aspettano un "sì".
+ * Le azioni distruttive aspettano un "sì". Ogni risposta porta il suo pannello, per la postazione sul computer.
  */
-export function useAssistant({ householdId, tz, list, deadlines, timers, reload }: Deps) {
+export function useAssistant({ householdId, tz, list, reminders, deadlines, timers, reload }: Deps) {
   const [reply, setReply] = useState<Reply | null>(null);
+  const [answer, setAnswer] = useState<Answer | null>(null);
   const [pending, setPending] = useState<Intent | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const shoppingItems = () => list.items.filter((i) => !i.checked).map((i) => i.name);
+
+  function respond(said: string, r: Reply) {
+    setReply(r);
+    setAnswer({ id: crypto.randomUUID(), said, reply: r.text, panel: r.panel ?? { kind: "text" }, at: new Date().toISOString() });
+  }
+
+  /** Una vista, come se la si fosse chiesta: sul computer la apre al centro (anche senza dire niente). */
+  async function view(v: View, said = ""): Promise<Reply> {
+    const now = new Date(), today = zonedDate(now, tz);
+    const soon = upcoming(reminders, now, tz).next.filter((u) => u.at.getTime() - now.getTime() < 14 * 86_400_000);
+    const openDeadlines = open(deadlines, today);
+    switch (v) {
+      case "shopping": {
+        const items = shoppingItems();
+        return { text: items.length ? `Da prendere: ${count(items.length, "cosa", "cose")}.` : "La lista è vuota.", panel: { kind: "shopping", items }, href: HREF.shopping, go: true };
+      }
+      case "timers":
+        return { text: timers.length ? `${count(timers.length, "timer attivo", "timer attivi")}.` : "Nessun timer attivo.", panel: { kind: "timers" }, href: HREF.timers, go: true };
+      case "reminders":
+        return {
+          text: soon.length ? `${count(soon.length, "promemoria", "promemoria")} nei prossimi giorni.` : "Nessun promemoria in programma.",
+          panel: { kind: "reminders", items: soon.slice(0, 10).map((u) => ({ title: u.reminder.title, at: u.at.toISOString() })) },
+          href: HREF.reminders, go: true,
+        };
+      case "deadlines":
+        return { text: openDeadlines.length ? `${count(openDeadlines.length, "scadenza", "scadenze")}.` : "Nessuna scadenza in vista.", panel: { kind: "deadlines" }, href: HREF.deadlines, go: true };
+      case "notes": {
+        const { data } = await supabase.from("notes").select("body, created_at").eq("household_id", householdId)
+          .is("deleted_at", null).order("created_at", { ascending: false }).limit(8);
+        const items = (data ?? []).map((n) => ({ body: n.body, when: new Date(n.created_at).toLocaleDateString("it-IT", { timeZone: tz, day: "numeric", month: "long" }) }));
+        return { text: items.length ? "Ecco le ultime note." : "Non ci sono note.", panel: { kind: "notes", items }, href: HREF.notes, go: true };
+      }
+      case "settings":
+        return { text: "Apro le impostazioni.", href: HREF.settings, go: true };
+      case "today":
+        return { text: said ? "Ecco la giornata." : "", panel: { kind: "today" }, href: HREF.today, go: true };
+    }
+  }
 
   async function ask(text: string) {
     if (!text.trim()) return;
@@ -84,18 +142,18 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
 
     if (pending) {
       setPending(null);
-      if (intent.type === "confirm") return setReply(await run(pending));
-      if (intent.type === "cancel") return setReply({ text: "Va bene, lascio stare." });
+      if (intent.type === "confirm") return respond(text, await run(pending));
+      if (intent.type === "cancel") return respond(text, { text: "Va bene, lascio stare." });
     }
     if (DESTRUCTIVE.has(intent.type)) {
       setPending(intent);
-      return setReply({ text: "Tolgo tutto dalla lista della spesa? Scrivi sì o no.", tone: "question" });
+      return respond(text, { text: "Tolgo tutto dalla lista della spesa? Scrivi sì o no.", tone: "question" });
     }
     setBusy(true);
     try {
-      setReply(await run(intent));
+      respond(text, await run(intent));
     } catch {
-      setReply({ text: "Non riesco a salvarlo: serve la rete. Riprova tra poco.", tone: "error" });
+      respond(text, { text: "Non riesco a salvarlo: serve la rete. Riprova tra poco.", tone: "error" });
     } finally {
       setBusy(false);
     }
@@ -104,34 +162,38 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
       switch (intent.type) {
         case "shopping.add":
           list.add(intent.items);
-          return { text: `Aggiunt${intent.items.length > 1 ? "i" : "o"}: ${and(intent.items.map(lower))}.`, href: "/spesa" };
+          return {
+            text: `Aggiunt${intent.items.length > 1 ? "i" : "o"}: ${and(intent.items.map(lower))}.`, href: "/spesa",
+            panel: { kind: "shopping", items: [...new Set([...shoppingItems(), ...intent.items])] },
+          };
         case "shopping.remove": {
           const found = intent.items.map((name) => list.items.find((i) => !i.checked && sameThing(name, i.name)));
           const ids = found.filter((i) => i !== undefined).map((i) => i.id);
           list.remove(ids);
           const missing = intent.items.filter((_, k) => !found[k]);
-          if (!ids.length) return { text: `Non trovo ${and(missing.map(lower))} nella lista.`, href: "/spesa" };
-          return { text: `Tolt${ids.length > 1 ? "i" : "o"} dalla lista.${missing.length ? ` Non c'era: ${and(missing.map(lower))}.` : ""}`, href: "/spesa" };
+          const panel: AnswerPanel = { kind: "shopping", items: list.items.filter((i) => !i.checked && !ids.includes(i.id)).map((i) => i.name) };
+          if (!ids.length) return { text: `Non trovo ${and(missing.map(lower))} nella lista.`, href: "/spesa", panel };
+          return { text: `Tolt${ids.length > 1 ? "i" : "o"} dalla lista.${missing.length ? ` Non c'era: ${and(missing.map(lower))}.` : ""}`, href: "/spesa", panel };
         }
         case "shopping.list": {
-          const todo = list.items.filter((i) => !i.checked).map((i) => lower(i.name));
-          return { text: todo.length ? `Da prendere: ${and(todo)}.` : "La lista è vuota.", href: "/spesa" };
+          const todo = shoppingItems();
+          return { text: todo.length ? `Da prendere: ${and(todo.map(lower))}.` : "La lista è vuota.", href: "/spesa", panel: { kind: "shopping", items: todo } };
         }
         case "shopping.clear":
           list.clearAll();
-          return { text: "Fatto: la lista è vuota.", href: "/spesa" };
+          return { text: "Fatto: la lista è vuota.", href: "/spesa", panel: { kind: "shopping", items: [] } };
 
         case "timer.query": {
           // Si leggono dalla copia in Supabase; metterli e fermarli resta a Roby, che suona in casa.
           const found = intent.label ? timers.filter((t) => t.label && sameThing(intent.label!, t.label)) : timers;
-          if (!found.length) return { text: intent.label ? `Nessun timer "${intent.label}".` : "Nessun timer attivo.", href: "/timer" };
+          if (!found.length) return { text: intent.label ? `Nessun timer "${intent.label}".` : "Nessun timer attivo.", href: "/timer", panel: { kind: "timers" } };
           return {
             text: found.map((t) => `${t.label ? `${t.label[0]!.toUpperCase()}${t.label.slice(1)}` : "Timer"}: ${t.status === "ringing" ? "sta suonando" : `mancano ${spoken(secondsLeft(t.ends_at, now))}`}`).join(". ") + ".",
-            href: "/timer",
+            href: "/timer", panel: { kind: "timers" },
           };
         }
         case "timer.start": case "timer.stop":
-          return { text: "I timer li mette e li ferma Roby, a casa: diglielo a voce. Qui vedi quanto manca.", href: "/timer" };
+          return { text: "I timer li mette e li ferma Roby, a casa: diglielo a voce. Qui vedi quanto manca.", href: "/timer", panel: { kind: "timers" } };
 
         case "reminder.create": {
           const recurrence = intent.recurrence ?? null;
@@ -143,15 +205,17 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
           if (error) throw error;
           reload();
           const when = recurrence ? `${lower(describe(recurrence))}, alle ${intent.time}` : `${lower(dayLabel(intent.date, today, addDays(today, 1)))} alle ${intent.time}`;
-          return { text: `Te lo ricordo ${when}: ${lower(intent.title)}.`, href: "/promemoria" };
+          return { text: `Te lo ricordo ${when}: ${lower(intent.title)}.`, href: "/promemoria", panel: { kind: "reminder", title: intent.title, date: intent.date, time: intent.time } };
         }
 
         case "deadline.query": {
-          const matches = intent.title ? openDeadlines.filter((d) => sameThing(intent.title!, d.deadline.title)) : openDeadlines.slice(0, 3);
-          if (!matches.length) return { text: intent.title ? `Non trovo una scadenza "${intent.title}".` : "Nessuna scadenza in vista.", href: "/scadenze" };
+          if (!intent.title) return { ...(await view("deadlines", text)), go: false };
+          const matches = openDeadlines.filter((d) => sameThing(intent.title!, d.deadline.title));
+          const first = matches[0];
+          if (!first) return { text: `Non trovo una scadenza "${intent.title}".`, href: "/scadenze" };
           return {
             text: matches.map((d) => `${d.deadline.title}: ${d.daysLeft < 0 ? whenLabel(d.daysLeft) : `scade ${whenLabel(d.daysLeft)}`}, ${shortDate(d.deadline.due_date, today)}`).join(". ") + ".",
-            href: "/scadenze",
+            href: "/scadenze", panel: { kind: "deadline", title: first.deadline.title, due: first.deadline.due_date },
           };
         }
         case "deadline.complete": {
@@ -161,25 +225,31 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
           const { error } = await supabase.rpc("complete_deadline", { deadline: d.id, next_due: next ?? undefined });
           if (error) throw error;
           reload();
-          return { text: `Segnata fatta: ${lower(d.title)}.${next ? ` La prossima è ${shortDate(next, today)}.` : ""}`, href: "/scadenze" };
+          return {
+            text: `Segnata fatta: ${lower(d.title)}.${next ? ` La prossima è ${shortDate(next, today)}.` : ""}`, href: "/scadenze",
+            ...(next ? { panel: { kind: "deadline" as const, title: d.title, due: next } } : {}),
+          };
         }
 
         case "note.save": {
           const { error } = await supabase.from("notes").insert({ household_id: householdId, body: intent.body, source: "pwa" });
           if (error) throw error;
-          return { text: "Me lo ricordo." };
+          return { text: "Me lo ricordo.", panel: { kind: "note", body: intent.body } };
         }
         case "note.ask": {
-          // Per parole, in OR: "dove sta la chiave di scorta" trova la nota con "chiave" e "scorta".
-          // ponytail: niente punteggio di pertinenza finché non arriva la ricerca per significato (fase 7).
+          // Per parole, in OR, sul server (full-text in italiano). La ricerca per significato la fa Roby sul Pi.
           const words = intent.question.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 2);
           const { data, error } = await supabase.from("notes").select("body").eq("household_id", householdId)
             .is("deleted_at", null).textSearch("tsv", words.join(" or "), { config: "italian", type: "websearch" })
             .order("created_at", { ascending: false }).limit(1);
           if (error) throw error;
-          return { text: data[0] ? `Ho annotato: "${data[0].body}"` : "Non ho niente annotato su questo." };
+          return data[0]
+            ? { text: `Ho annotato: "${data[0].body}"`, panel: { kind: "note", body: data[0].body } }
+            : { text: "Non ho niente annotato su questo." };
         }
 
+        case "show":
+          return view(intent.view, text);
         case "smalltalk":
           return { text: smalltalkReply(intent.topic, now, tz) };
         case "confirm": case "cancel":
@@ -187,10 +257,18 @@ export function useAssistant({ householdId, tz, list, deadlines, timers, reload 
         case "unknown":
           // Le frasi non capite servono a migliorare le regole: si registrano, senza fermarsi se non c'è rete.
           void supabase.from("unparsed_log").insert({ household_id: householdId, text: text.slice(0, 500), source: "pwa" }).then(() => {});
-          return { text: "Non ho capito. Prova con \"aggiungi il latte\" o \"ricordami domani alle 9 di chiamare il medico\".", tone: "error" };
+          return { text: "Non ho capito. Prova con \"aggiungi il latte\" o \"mostrami i promemoria\".", tone: "error" };
       }
     }
   }
 
-  return { reply, busy, ask, clear: () => { setReply(null); setPending(null); } };
+  return {
+    reply, answer, busy, ask,
+    /** Apre una vista senza che la si chieda (il link /spesa sul computer). */
+    show: async (v: View) => {
+      const r = await view(v);
+      setAnswer({ id: crypto.randomUUID(), said: "", reply: r.text, panel: r.panel ?? { kind: "text" }, at: new Date().toISOString() });
+    },
+    clear: () => { setReply(null); setAnswer(null); setPending(null); },
+  };
 }

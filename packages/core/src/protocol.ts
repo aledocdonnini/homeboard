@@ -29,7 +29,14 @@ export type AnswerPanel =
   | { kind: "shopping"; items: string[] }
   | { kind: "reminder"; title: string; date: PlainDate; time: string }
   | { kind: "deadline"; title: string; due: PlainDate }
-  | { kind: "note"; body: string };
+  | { kind: "note"; body: string }
+  // Viste chieste a voce ("mostrami i promemoria"). Oggi, timer e scadenze si disegnano dallo stato, sempre aggiornato;
+  // promemoria e note portano i loro dati (lo stato ha solo quelli delle prossime 24 ore, e niente note).
+  | { kind: "today" }
+  | { kind: "timers" }
+  | { kind: "deadlines" }
+  | { kind: "reminders"; items: { title: string; at: string }[] }
+  | { kind: "notes"; items: { body: string; when: string }[] };
 
 export type Answer = { id: string; said: string; reply: string; panel: AnswerPanel; at: string };
 

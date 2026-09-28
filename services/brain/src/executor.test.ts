@@ -78,3 +78,18 @@ test("non capita: si registra per migliorare le regole", async () => {
   assert.equal((await say("accendi la luce")).reply, "Scusa, non ho capito.");
   assert.equal(store.queue().at(-1)!.op.table, "unparsed_log");
 });
+
+test("viste: mostrami…", async () => {
+  const { store, say } = setup();
+  await say("aggiungi latte e uova");
+  await say("ricordami domani alle nove di chiamare l'idraulico");
+  const shopping = await say("fammi vedere la spesa");
+  assert.deepEqual([shopping.reply, shopping.panel], ["Da prendere: 2 cose.", { kind: "shopping", items: ["Latte", "Uova"] }]);
+  const reminders = await say("mostrami i promemoria");
+  assert.equal(reminders.reply, "1 promemoria nei prossimi giorni.");
+  assert.deepEqual(reminders.panel, { kind: "reminders", items: [{ title: "Chiamare l'idraulico", at: "2026-09-29T07:00:00.000Z" }] });
+  assert.equal((await say("cosa c'è oggi?")).reply, "Oggi: nessun promemoria, 2 cose da comprare.");
+  assert.equal((await say("quali scadenze ci sono?")).reply, "Nessuna scadenza in vista.");
+  assert.equal((await say("fammi vedere le note")).panel?.kind, "notes");
+  void store;
+});

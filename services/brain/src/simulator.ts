@@ -174,6 +174,18 @@ async function run(intent: Intent, said: string, now: Date) {
       answer(said, reply, hit ? { kind: "note", body: hit } : { kind: "text" });
       break;
     }
+    case "show": {
+      if (intent.view === "settings") { reply = "Le impostazioni si aprono dal telefono."; state.answer = null; break; }
+      const panels: Record<Exclude<typeof intent.view, "settings">, AnswerPanel> = {
+        today: { kind: "today" }, timers: { kind: "timers" }, deadlines: { kind: "deadlines" },
+        shopping: { kind: "shopping", items: state.shopping },
+        reminders: { kind: "reminders", items: state.reminders },
+        notes: { kind: "notes", items: notes.map((body) => ({ body, when: "Oggi" })) },
+      };
+      reply = { today: "Ecco la giornata.", timers: "Ecco i timer.", deadlines: "Ecco le scadenze.", shopping: "Ecco la spesa.", reminders: "Ecco i promemoria.", notes: "Ecco le note." }[intent.view];
+      answer(said, reply, panels[intent.view]);
+      break;
+    }
     case "smalltalk":
       reply = smalltalkReply(intent.topic, now, TZ);
       state.answer = null;

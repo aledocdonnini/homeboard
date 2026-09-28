@@ -20,7 +20,7 @@ export function parse(text: string, ctx: Context): Intent {
   const t = u.text;
   // "Grazie!" da solo: la cortesia in coda l'ha tolto, ma era tutta la frase.
   if (!t) return /grazie|bravo|brava/i.test(text) ? { type: "smalltalk", topic: "thanks" } : { type: "unknown", text };
-  const chat = smalltalk(t);
+  const chat = smalltalk(t) ?? show(t);
   if (chat) return chat;
 
   const intent = confirmation(t) ?? timer(u, ctx) ?? note(u) ?? reminder(u, ctx) ?? deadline(u, ctx) ?? shopping(u, ctx) ?? question(u);
@@ -40,6 +40,32 @@ function smalltalk(t: string): Intent | null {
     : /^(?:cosa sai fare|cosa puoi fare|che cosa sai fare|aiuto|come funzioni|cosa ti posso chiedere)\b/.test(t) ? "help"
     : null;
   return topic ? { type: "smalltalk", topic } : null;
+}
+
+// ——— Viste ————————————————————————————————————————————————————————————————————
+
+const VIEWS: [RegExp, Extract<Intent, { type: "show" }>["view"]][] = [
+  [/^(?:lista(?: della spesa)?|spesa)$/, "shopping"],
+  [/^timer$/, "timers"],
+  [/^(?:promemoria|impegni|appuntamenti)$/, "reminders"],
+  [/^(?:scadenze|bollette)$/, "deadlines"],
+  [/^(?:note|appunti|cose che ti ho detto)$/, "notes"],
+  [/^(?:oggi|giornata|riepilogo|programma di oggi|cosa c'e oggi)$/, "today"],
+  [/^(?:impostazioni|opzioni|casa|membri)$/, "settings"],
+];
+
+/** "Mostrami i promemoria", "fammi vedere la spesa", "cosa c'è oggi?": cambia la parte centrale dello schermo. */
+function show(t: string): Intent | null {
+  if (/^(?:cosa (?:c'e|ho|devo fare|abbiamo)|che (?:programmi|impegni) (?:ho|abbiamo)|com'e la giornata)(?: (?:da fare|in programma))? oggi$|^riepilogo(?: di oggi| della giornata)?$|^buongiorno cosa c'e oggi$/.test(t)) {
+    return { type: "show", view: "today" };
+  }
+  if (/^(?:che|quali) promemoria (?:ho|abbiamo|ci sono)$|^(?:i miei|i nostri) promemoria$/.test(t)) return { type: "show", view: "reminders" };
+  if (/^(?:che|quali) note (?:ho|abbiamo|ci sono)$/.test(t)) return { type: "show", view: "notes" };
+  const m = /^(?:mostrami|mostraci|mostra|fammi vedere|facci vedere|fai vedere|fammi|apri|aprimi|visualizza|vai (?:a|su|alla|alle|ai|agli|al)|torna (?:a|alla|alle|ai|al)|passa (?:a|alla|alle|ai|al))\s+(?:(?:la|le|i|gli|il|lo|l')\s?)?(.+)$/.exec(t);
+  if (!m) return null;
+  const what = m[1]!.replace(/^(?:mia|mie|miei|nostra|nostre|nostri)\s+/, "").trim();
+  const view = VIEWS.find(([re]) => re.test(what))?.[1];
+  return view ? { type: "show", view } : null;
 }
 
 // ——— Sì / no ——————————————————————————————————————————————————————————————————

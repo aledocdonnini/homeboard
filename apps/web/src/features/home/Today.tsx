@@ -11,7 +11,8 @@ import { useTimers } from "@/features/timers/useTimers";
 import Cruscotto from "@/features/home/Cruscotto";
 import { toDashData } from "./dashData";
 
-// La home della PWA: il cruscotto con i dati veri della casa, e il campo per chiedere a Roby.
+// La home della PWA sul telefono: il cruscotto con i dati veri della casa, e il campo per chiedere a Roby.
+// Sul computer al suo posto c'è la postazione (features/casa/DesktopStation).
 export default function Today({ householdId, tz }: { householdId: string; tz: string }) {
   const list = useShoppingList(householdId);
   const reminders = useRows<Reminder>("reminders", householdId);
@@ -19,14 +20,13 @@ export default function Today({ householdId, tz }: { householdId: string; tz: st
   const { timers } = useTimers(householdId);
   const [now] = useState(() => new Date());
   const assistant = useAssistant({
-    householdId, tz, list, deadlines: deadlines.rows ?? [], timers: timers ?? [],
+    householdId, tz, list, reminders: reminders.rows ?? [], deadlines: deadlines.rows ?? [], timers: timers ?? [],
     reload: () => { void reminders.reload(); void deadlines.reload(); },
   });
   return (
     <Cruscotto
       data={toDashData(list.items, reminders.rows ?? [], deadlines.rows ?? [], tz, now)}
-      ask={(desktop) => <Ask assistant={assistant} replyHere={!desktop} />}
-      reply={assistant.reply}
+      ask={<Ask assistant={assistant} />}
     />
   );
 }

@@ -27,6 +27,8 @@ export const Intent = z.discriminatedUnion("type", [
   z.object({ type: z.literal("note.ask"), question: Name }),
   z.object({ type: z.literal("confirm") }),
   z.object({ type: z.literal("cancel") }),
+  /** Cambiare vista sullo schermo ("mostrami i promemoria"): la TV e il computer mostrano quella parte al centro. */
+  z.object({ type: z.literal("show"), view: z.enum(["today", "shopping", "timers", "reminders", "deadlines", "notes", "settings"]) }),
   /** Due chiacchiere: saluti, "come stai", "grazie", l'ora, la data, "chi sei", "cosa sai fare". */
   z.object({ type: z.literal("smalltalk"), topic: z.enum(["hello", "how", "thanks", "time", "date", "who", "help"]) }),
   z.object({ type: z.literal("unknown"), text: z.string() }),

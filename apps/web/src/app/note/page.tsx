@@ -1,8 +1,8 @@
 "use client";
 
-import HouseholdGate from "@/features/household/HouseholdGate";
+import Screen from "@/features/casa/Screen";
 import Notes from "@/features/notes/Notes";
 
 export default function Page() {
-  return <HouseholdGate>{(house) => <Notes householdId={house.id} />}</HouseholdGate>;
+  return <Screen view="notes" phone={(house) => <Notes householdId={house.id} />} />;
 }

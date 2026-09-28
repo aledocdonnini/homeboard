@@ -1,8 +1,8 @@
 "use client";
 
-import HouseholdGate from "@/features/household/HouseholdGate";
+import Screen from "@/features/casa/Screen";
 import Timers from "@/features/timers/Timers";
 
 export default function Page() {
-  return <HouseholdGate>{(house) => <Timers householdId={house.id} />}</HouseholdGate>;
+  return <Screen view="timers" phone={(house) => <Timers householdId={house.id} />} />;
 }

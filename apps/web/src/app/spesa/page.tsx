@@ -1,8 +1,8 @@
 "use client";
 
-import HouseholdGate from "@/features/household/HouseholdGate";
+import Screen from "@/features/casa/Screen";
 import ShoppingList from "@/features/shopping/ShoppingList";
 
 export default function Page() {
-  return <HouseholdGate>{(house) => <ShoppingList householdId={house.id} />}</HouseholdGate>;
+  return <Screen view="shopping" phone={(house) => <ShoppingList householdId={house.id} />} />;
 }

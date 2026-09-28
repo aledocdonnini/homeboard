@@ -1,6 +1,7 @@
 "use client";
 
-import { SignOut } from "@phosphor-icons/react";
+import Link from "next/link";
+import { ArrowLeft, SignOut } from "@phosphor-icons/react";
 import { signOut } from "@/features/auth/signOut";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
@@ -25,6 +26,10 @@ export default function HouseholdPanel({ house, session }: { house: Household; s
 
   return (
     <Section aside={<>
+      {/* Sul computer non c'è la barra delle sezioni: si torna alla postazione da qui. */}
+      <Link href="/" className="hidden items-center gap-2 self-start text-lg font-semibold underline-offset-4 hover:underline lg:flex">
+        <ArrowLeft aria-hidden weight="bold" className="size-5" /> Torna a Roby
+      </Link>
       <PageHeader title="Casa">
         <p className="flex items-end gap-3">
           <Big className="text-8xl lg:text-[10rem]">{String(house.household_members.length).padStart(2, "0")}</Big>

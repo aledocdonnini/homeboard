@@ -1,7 +1,8 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Microphone } from "@phosphor-icons/react";
 import Button from "@/components/ui/Button";
 import type { useAssistant } from "./useAssistant";
@@ -13,6 +14,11 @@ export default function Ask({ assistant, replyHere = true }: { assistant: Return
   const [text, setText] = useState("");
   const id = useId();
   const { reply, busy, ask } = assistant;
+  const router = useRouter();
+  // Sul telefono "mostrami la spesa" apre la sezione; sul computer (replyHere false) cambia il pannello al centro.
+  useEffect(() => {
+    if (replyHere && reply?.go && reply.href) router.push(reply.href);
+  }, [reply, replyHere, router]);
   const voice = useDictation({ onPartial: setText, onFinal: (said) => { setText(""); void ask(said); } });
 
   async function submit(e: React.FormEvent) {

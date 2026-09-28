@@ -10,6 +10,7 @@ import { answerFromNotes, sameThing, smalltalkReply, type Intent, type LlmConfig
 import type { BrainOp, Row, Store } from "./store.ts";
 import { cite, noteDay, origin, rank, search, SURE, type Embedder } from "./notes.ts";
 import type { Timers } from "./timers.ts";
+import { upcoming } from "./state.ts";
 
 export type Result = {
   reply: string;
@@ -124,6 +125,10 @@ export async function execute(intent: Intent, { store, timers, householdId, time
 
     case "deadline.query": {
       const open = openDeadlines(store);
+      if (!intent.title) {
+        const first = open[0];
+        return { reply: first ? `Ecco le scadenze. ${dueSentence(first, today)}` : "Nessuna scadenza in vista.", panel: { kind: "deadlines" } };
+      }
       const found = intent.title ? open.filter((d) => sameThing(intent.title!, String(d.title))) : open.slice(0, 2);
       if (!found.length) return { reply: intent.title ? `Non trovo una scadenza ${intent.title}.` : "Nessuna scadenza in vista.", panel: null };
       const first = found[0]!;
@@ -175,6 +180,9 @@ export async function execute(intent: Intent, { store, timers, householdId, time
 
     case "smalltalk":
       return { reply: smalltalkReply(intent.topic, now, timezone), panel: null };
+
+    case "show":
+      return showView(intent.view, store, timers, now, timezone);
     case "confirm": case "cancel":
       return { reply: "Non c'era niente da confermare.", panel: null };
     case "unknown": {
@@ -191,6 +199,50 @@ export async function execute(intent: Intent, { store, timers, householdId, time
 }
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
+
+/** "Mostrami …": la vista al centro dello schermo, e una frase breve (la si guarda, non la si ascolta). */
+function showView(view: Extract<Intent, { type: "show" }>["view"], store: Store, timers: Timers, now: Date, timezone: string): Result {
+  const today = zonedDate(now, timezone);
+  const soon = upcoming(store.live("reminders"), now, timezone).filter((r) => r.at.getTime() - now.getTime() < 14 * 86_400_000);
+  switch (view) {
+    case "shopping": {
+      const items = shoppingList(store);
+      return { reply: items.length ? `Da prendere: ${count(items.length, "cosa", "cose")}.` : "La lista è vuota.", panel: { kind: "shopping", items } };
+    }
+    case "timers":
+      return { reply: timers.list.length ? `${capital(count(timers.list.length, "timer attivo", "timer attivi"))}.` : "Nessun timer attivo.", panel: { kind: "timers" } };
+    case "reminders":
+      return {
+        reply: soon.length ? `${capital(count(soon.length, "promemoria", "promemoria"))} nei prossimi giorni.` : "Nessun promemoria in programma.",
+        panel: { kind: "reminders", items: soon.slice(0, 10).map((r) => ({ title: r.title, at: r.at.toISOString() })) },
+      };
+    case "deadlines": {
+      const first = openDeadlines(store)[0];
+      return { reply: first ? `Ecco le scadenze. ${dueSentence(first, today)}` : "Nessuna scadenza in vista.", panel: { kind: "deadlines" } };
+    }
+    case "notes": {
+      const notes = store.live("notes").sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 8);
+      return {
+        reply: notes.length ? "Ecco le ultime note." : "Non ci sono note: dimmi «ricorda che…».",
+        panel: { kind: "notes", items: notes.map((n) => ({ body: String(n.body), when: noteDay(n, now, timezone) })) },
+      };
+    }
+    case "settings":
+      return { reply: "Le impostazioni della casa si aprono dal telefono o dal computer.", panel: null };
+    case "today": {
+      const todays = soon.filter((r) => zonedDate(r.at, timezone) === today);
+      const close = openDeadlines(store).filter((d) => daysBetween(today, String(d.due_date)) <= 7);
+      const items = shoppingList(store).length;
+      const parts = [
+        todays.length ? count(todays.length, "promemoria", "promemoria") : "nessun promemoria",
+        close.length ? count(close.length, "scadenza vicina", "scadenze vicine") : "",
+        items ? `${count(items, "cosa", "cose")} da comprare` : "",
+      ].filter(Boolean);
+      return { reply: `Oggi: ${parts.join(", ")}.`, panel: { kind: "today" } };
+    }
+  }
+}
 
 function dueSentence(d: Row, today: PlainDate) {
   const n = daysBetween(today, String(d.due_date));

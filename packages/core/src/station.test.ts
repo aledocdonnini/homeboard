@@ -27,7 +27,10 @@ test("priorità del pannello centrale", () => {
   assert.equal(kind({}), "idle");
   assert.equal(kind({ timers: [{ ...pasta, status: "ringing" }], answer }), "ringing", "un timer che suona vince su tutto");
   assert.equal(kind({ timers: [pasta], answer }), "answer", "la risposta appena data vince sui timer");
-  assert.equal(kind({ timers: [pasta], answer: { ...answer, at: at(-31_000) } }), "timers", "dopo 30 secondi la risposta sparisce");
+  assert.equal(kind({ timers: [pasta], answer: { ...answer, panel: { kind: "text" }, at: at(-31_000) } }), "timers", "dopo 30 secondi la risposta sparisce");
+  assert.equal(kind({ answer: { ...answer, panel: { kind: "today" }, at: at(-50_000) } }), "answer", "una vista chiesta resta un minuto");
+  assert.equal(kind({ answer: { ...answer, panel: { kind: "today" }, at: at(-61_000) } }), "idle");
+  assert.equal(pickPanel({ ...base, answer: { ...answer, at: at(-3_600_000) } }, now, { sticky: true }).kind, "answer", "sul computer resta");
   assert.equal(kind({ reminders: [{ title: "Dentista", at: at(45 * 60_000) }] }), "soon");
   assert.equal(kind({ reminders: [{ title: "Dentista", at: at(90 * 60_000) }] }), "idle", "fra un'ora e mezza non è ancora imminente");
   assert.equal(kind({ deadlines: [{ title: "Bollo", due: "2026-10-01" }] }), "soon");

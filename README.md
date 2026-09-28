@@ -1,14 +1,14 @@
 # Homeboard
 
-Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
+Roby, l'assistente di casa per spesa, timer, promemoria, scadenze e note, con tre facce:
 
-- una **PWA** per il telefono, che funziona anche offline al supermercato e manda notifiche push;
-- una **vista TV** a tutto schermo che gira su un Raspberry Pi dentro un televisore portatile Crezar degli anni '70;
-- **Roby**, un volto animato che è la voce della TV e annuncia le cose.
+- la **postazione di casa**: un Raspberry Pi dentro un televisore portatile Crezar degli anni '70. Ci si parla ("Ehi Roby"), e lo schermo mostra: un solo layout, dove cambia solo la parte centrale;
+- la **PWA sul telefono**: le sezioni con la barra in basso, anche offline al supermercato, con notifiche push;
+- la **PWA sul computer**: la stessa postazione della TV, con i dati della PWA. Niente tasti: la vista si cambia chiedendo a Roby ("mostrami i promemoria").
 
-![Il cruscotto della PWA su desktop](docs/img/tv-cruscotto.jpg)
+Sintesi di cosa fa e idee per estenderlo: [`docs/sintesi.html`](docs/sintesi.html).
 
-| Il telefono | Il monoscopio (canale 5) |
+| Il telefono | Il monoscopio, a riposo |
 |---|---|
 | ![Oggi, Spesa e Scadenze sul telefono](docs/img/pwa-telefono.png) | ![Il monoscopio di Homeboard](docs/img/tv-monoscopio.jpg) |
 
@@ -113,7 +113,7 @@ npm run dev                                                       # la PWA su ht
   npm run simulate -w @homeboard/brain            # poi apri http://localhost:3000/casa e scrivi frasi nel terminale
   npm run simulate -w @homeboard/brain -- --demo  # un giro di tutti i pannelli
   ```
-  `/help` nel terminale elenca i comandi (ascolto, microfono spento, notte, abbinamento, senza internet…). `/cruscotto` mostra la home della PWA con dati d'esempio.
+  `/help` nel terminale elenca i comandi (ascolto, microfono spento, notte, abbinamento, senza internet…).
 - **Il service worker** in sviluppo è spento. Per provare PWA e offline: `npm run build && npm run start -w @homeboard/web`.
 
 ## Comandi
