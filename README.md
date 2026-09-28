@@ -14,6 +14,10 @@ Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
 
 ## Cosa fa
 
+- **Chiedi a Roby:** un campo unico nella schermata Oggi, in italiano come si parlerebbe: "latte e uova", "togli il pane", "ricordami domani alle nove di chiamare l'idraulico", "quando scade il bollo?", "ricorda che la chiave di scorta è da mia madre". Lo interpreta `packages/intents`, lo stesso codice che userà Roby a voce sul Raspberry:
+  - regole e modelli di frase, senza rete né costi; le frasi sono in `packages/intents/src/corpus.test.ts`;
+  - le azioni distruttive ("svuota la lista") chiedono conferma;
+  - le frasi non capite finiscono in `unparsed_log`, per migliorare le regole.
 - **Spesa:**
   - aggiunta rapida, anche di più cose insieme separate da virgole;
   - suggerimenti dalle cose usate più spesso;

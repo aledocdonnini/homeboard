@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@homeboard/core": "*",
+    "@homeboard/intents": "*",
     "@phosphor-icons/react": "^2.1.10",
     "@serwist/turbopack": "^9.5.12",
     "@supabase/supabase-js": "^2.117.2",

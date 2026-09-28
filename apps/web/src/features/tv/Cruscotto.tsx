@@ -29,8 +29,11 @@ const when = (n: number) => (n < 0 ? `scaduta da ${-n} ${n === -1 ? "giorno" : "
  * Il cruscotto. `tv`: la vista del televisore (tutto lo schermo, niente link; il canale lo sceglie TvScreen).
  * Senza `tv` è la home della PWA: stesso cruscotto, con la barra in basso e i moduli che portano alle sezioni.
  */
-export default function Cruscotto({ data, tv = false, channel = 1, surprised = false }:
-  { data: DashData; tv?: boolean; channel?: DashChannel; surprised?: boolean }) {
+export default function Cruscotto({ data, tv = false, channel = 1, surprised = false, ask, reply }: {
+  data: DashData; tv?: boolean; channel?: DashChannel; surprised?: boolean;
+  /** Solo PWA: il campo per chiedere a Roby, e la sua ultima risposta (su desktop la dice lui). */
+  ask?: (desktop: boolean) => ReactNode; reply?: { text: string; tone?: string } | null;
+}) {
   const [today] = useState(() => new Date()); // solo client: le pagine lo montano senza SSR
 
   const [next, ...later] = data.deadlines;
@@ -94,7 +97,10 @@ export default function Cruscotto({ data, tv = false, channel = 1, surprised = f
             </div>
 
             <div className="col-span-3 flex flex-col gap-6">
-              <RobyPanel expression={expressionFor(mood)} says={says} className="flex-1" />
+              <RobyPanel
+                expression={reply ? (reply.tone === "error" ? "confused" : reply.tone === "question" ? "thinking" : "happy") : expressionFor(mood)}
+                says={reply?.text ?? says} className="flex-1" />
+              {ask?.(true)}
               <div className="grid grid-cols-2 gap-4">
                 {to("/spesa", <Module label="Spesa"><Big className="text-6xl">{two(todo.length)}</Big></Module>)}
                 {to("/scadenze", <Module label="Scadenze in 30 giorni"><Big className="text-6xl">{two(soon)}</Big></Module>)}
@@ -170,6 +176,8 @@ export default function Cruscotto({ data, tv = false, channel = 1, surprised = f
           </div>
           <MonthDots today={today} marked={marked} />
         </section>
+
+        {ask?.(false)}
 
         <div className="grid gap-4 md:grid-cols-2">
           {next && to("/scadenze", (

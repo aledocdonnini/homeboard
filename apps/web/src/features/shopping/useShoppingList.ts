@@ -44,6 +44,12 @@ export function useShoppingList(householdId: string) {
   const update = (id: string, patch: Extract<Op, { kind: "update" }>["patch"]) =>
     change(householdId, [{ kind: "update", itemId: id, patch }]);
 
+  function drop(rows: Item[]) {
+    const now = new Date().toISOString();
+    const ops: Op[] = rows.map((i) => ({ kind: "update", itemId: i.id, patch: { deleted_at: now } }));
+    if (ops.length) void change(householdId, ops);
+  }
+
   /** Aggiunge dei nomi. Se una cosa è già in lista non la duplica; se era spuntata la rimette da comprare. */
   function add(names: string[]) {
     const ops: Op[] = [];
@@ -73,11 +79,10 @@ export function useShoppingList(householdId: string) {
     /** Pronta quando c'è la copia locale e almeno un download riuscito (o non c'è rete per farlo). */
     loaded: items !== undefined && synced !== undefined && (!!synced || live.length > 0 || !navigator.onLine),
     add,
-    clearChecked: () => {
-      const now = new Date().toISOString();
-      const ops: Op[] = live.filter((i) => i.checked).map((i) => ({ kind: "update", itemId: i.id, patch: { deleted_at: now } }));
-      if (ops.length) void change(householdId, ops);
-    },
+    clearChecked: () => drop(live.filter((i) => i.checked)),
+    /** Toglie dalla lista (tombstone: la cancellazione arriva anche a chi è offline). */
+    remove: (ids: string[]) => drop(live.filter((i) => ids.includes(i.id))),
+    clearAll: () => drop(live),
     setChecked: (id: string, checked: boolean) => update(id, { checked }),
     setCategory: (id: string, category: string) => update(id, { category }),
     /** Sposta fra due vicini dello stesso reparto (undefined = in cima / in fondo). */
