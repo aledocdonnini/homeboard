@@ -6,7 +6,7 @@ Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
 - una **vista TV** a tutto schermo che gira su un Raspberry Pi dentro un televisore portatile Crezar degli anni '70;
 - **Roby**, un volto animato che è la voce della TV e annuncia le cose.
 
-![La TV: il cruscotto sul canale 1](docs/img/tv-cruscotto.jpg)
+![Il cruscotto della PWA su desktop](docs/img/tv-cruscotto.jpg)
 
 | Il telefono | Il monoscopio (canale 5) |
 |---|---|
@@ -30,13 +30,11 @@ Spesa, promemoria e scadenze di casa in un'unica app con tre facce:
 - **Note:** le cose da ritrovare ("la chiave di scorta è da mia madre"), scritte qui o dette a Roby. Si cercano per parole anche offline; a Roby si chiede "dove sta la chiave di scorta?".
 - **Premi e parla:** il tasto del microfono accanto al campo usa il riconoscimento vocale del browser (Chrome su Android, Safari su iOS) e passa dallo stesso interprete.
 - **Casa condivisa, solo su invito:** la casa la crea chi è autorizzato, e il proprietario aggiunge le persone con la loro email (entrano da sole al primo accesso). Chi non è in elenco non può registrarsi. I televisori si abbinano con un codice.
-- **TV:**
-  - sei canali sui sei tasti originali: cruscotto, spesa, promemoria, scadenze, monoscopio, Roby;
-  - filtro CRT, neve e fruscio al cambio canale, numero del canale in stile OSD;
-  - "fine delle trasmissioni" di notte.
-- **Roby:**
-  - preoccupato per una scadenza vicina, contento con la lista vuota, addormentato di notte, sorpreso quando arriva qualcosa di nuovo;
-  - legge il riepilogo della giornata con una voce italiana (Piper sul Raspberry).
+- **La postazione di casa (`/casa`, sul Pi dentro la Crezar):** si usa solo a voce, lo schermo mostra e basta.
+  - Un solo layout: a sinistra ora, Roby e lo stato del microfono (sempre visibile), a destra un pannello che cambia secondo un ordine di priorità: timer che suona, risposta appena data (30 secondi), timer attivi, promemoria entro un'ora o scadenza entro tre giorni, e a riposo il monoscopio.
+  - Filtro CRT, neve e fruscio a ogni cambio di pannello, "fine delle trasmissioni" di notte.
+  - Tutto arriva da `brain` sul Pi via WebSocket locale: la pagina non parla con Supabase e funziona anche senza internet.
+- **Roby:** ascolta, pensa e parla (la bocca segue il volume della voce), preoccupato per una scadenza vicina, contento con la lista vuota, addormentato di notte, sorpreso quando arriva qualcosa di nuovo.
 
 ## Architettura
 
@@ -106,7 +104,12 @@ npm run dev                                                       # la PWA su ht
 ```
 
 - **Accesso:** l'email con il codice arriva in Mailpit, su <http://127.0.0.1:54324>.
-- **La TV:** si prova su <http://localhost:3000/casa> nello stesso browser, perché ha una sessione separata. Oppure su `/cruscotto`, con dati d'esempio e i tasti da 1 a 6.
+- **La postazione:** senza Raspberry si prova col simulatore di brain, che usa l'interprete vero:
+  ```bash
+  npm run simulate -w @homeboard/brain            # poi apri http://localhost:3000/casa e scrivi frasi nel terminale
+  npm run simulate -w @homeboard/brain -- --demo  # un giro di tutti i pannelli
+  ```
+  `/help` nel terminale elenca i comandi (ascolto, microfono spento, notte, abbinamento, senza internet…). `/cruscotto` mostra la home della PWA con dati d'esempio.
 - **Il service worker** in sviluppo è spento. Per provare PWA e offline: `npm run build && npm run start -w @homeboard/web`.
 
 ## Comandi

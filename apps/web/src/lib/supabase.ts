@@ -11,15 +11,8 @@ const fetchWithTimeout: typeof fetch = (input, init) => {
   return fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
 };
 
-const make = (storageKey?: string) => createClient<Database>(
+export const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  { global: { fetch: fetchWithTimeout }, auth: storageKey ? { storageKey } : undefined },
+  { global: { fetch: fetchWithTimeout } },
 );
-
-export const supabase = make();
-
-// La TV ha una sessione sua (utente anonimo abbinato alla casa), salvata a parte: nello stesso browser
-// si può essere membri nella PWA e provare /tv senza che le due sessioni si pestino.
-let tv: ReturnType<typeof make> | undefined;
-export const tvClient = () => (tv ??= make("hb-tv-auth"));

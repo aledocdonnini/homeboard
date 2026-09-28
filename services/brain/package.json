@@ -7,8 +7,17 @@
   "engines": {
     "node": ">=22.18"
   },
+  "scripts": {
+    "simulate": "node src/simulator.ts",
+    "typecheck": "tsc -p . --noEmit"
+  },
   "dependencies": {
     "@homeboard/core": "*",
-    "@homeboard/intents": "*"
+    "@homeboard/intents": "*",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/ws": "^8.18.1"
   }
 }

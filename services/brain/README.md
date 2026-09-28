@@ -14,3 +14,11 @@ voice ──socket Unix /run/user/…/roby.sock (JSON a righe)──▶ brain �
 - Chiede conferma per le azioni distruttive.
 - Registra le frasi non capite (`unparsed_log`).
 - Tiene la sessione del dispositivo (un utente anonimo di Supabase abbinato con un codice) e manda a `/casa` lo stato da mostrare. I messaggi sono in `packages/core/src/protocol.ts`.
+
+## Simulatore
+
+Finché `brain` non c'è (fase 4), `src/simulator.ts` fa le sue veci per la vista `/casa`. Usa lo stesso protocollo, tiene lo stato in memoria e passa dall'interprete vero le frasi scritte nel terminale:
+
+```bash
+npm run simulate -w @homeboard/brain   # ws://127.0.0.1:8765; /help per i comandi, --demo per il giro dei pannelli
+```

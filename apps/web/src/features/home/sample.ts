@@ -1,6 +1,6 @@
 import type { DashData } from "./Cruscotto";
 
-// Dati d'esempio per /cruscotto, finché la TV non legge quelli veri (fase 7). Relativi a oggi.
+// Dati d'esempio per /cruscotto: il cruscotto della PWA senza casa né login. Relativi a oggi.
 const at = (days: number) => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);

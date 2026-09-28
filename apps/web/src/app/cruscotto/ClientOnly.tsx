@@ -2,5 +2,5 @@
 
 import dynamic from "next/dynamic";
 
-// Il cruscotto dipende dall'ora del dispositivo: niente render sul server, niente differenze all'idratazione.
-export default dynamic(() => import("@/features/tv/CruscottoDemo"), { ssr: false });
+// Solo client: il cruscotto legge l'ora del dispositivo.
+export default dynamic(() => import("@/features/home/CruscottoDemo"), { ssr: false });

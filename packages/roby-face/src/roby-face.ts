@@ -131,6 +131,14 @@ export class RobyFaceElement extends HTMLElement {
     this.#speech?.abort();
   }
 
+  /**
+   * Bocca mossa da una voce che non passa dal browser (es. Piper suonato da un altro processo): volume 0..1,
+   * circa 30 volte al secondo, con mode="talking". null torna alle sillabe finte.
+   */
+  setSpeechLevel(level: number | null) {
+    this.#face?.setSpeechLevel(level);
+  }
+
   #applyExpression() {
     const id = this.expression;
     this.#face?.setExpression(id);

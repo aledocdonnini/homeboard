@@ -8,7 +8,7 @@ import type { Deadline } from "@/features/deadlines/due";
 import type { Reminder } from "@/features/reminders/schedule";
 import { useShoppingList } from "@/features/shopping/useShoppingList";
 import { useTimers } from "@/features/timers/useTimers";
-import Cruscotto from "@/features/tv/Cruscotto";
+import Cruscotto from "@/features/home/Cruscotto";
 import { toDashData } from "./dashData";
 
 // La home della PWA: il cruscotto con i dati veri della casa, e il campo per chiedere a Roby.

@@ -2,7 +2,7 @@ import { zonedDate } from "@homeboard/core/recurrence";
 import { open, type Deadline } from "@/features/deadlines/due";
 import { hhmm, onDay, type Reminder } from "@/features/reminders/schedule";
 import { arrange, type Item } from "@homeboard/core/items";
-import type { DashData } from "@/features/tv/Cruscotto";
+import type { DashData } from "@/features/home/Cruscotto";
 
 const toDate = (day: string) => {
   const [y, m, d] = day.split("-").map(Number) as [number, number, number];

@@ -2,5 +2,5 @@
 
 import dynamic from "next/dynamic";
 
-// La TV dipende dall'ora e dalla sessione del dispositivo: niente render sul server.
-export default dynamic(() => import("@/features/tv/TvApp"), { ssr: false });
+// La postazione di casa: tutto arriva da brain sul Pi (WebSocket locale), niente render sul server.
+export default dynamic(() => import("@/features/casa/HomeView"), { ssr: false });

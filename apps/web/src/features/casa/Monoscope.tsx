@@ -31,12 +31,13 @@ function Grating({ x, y, w, h, gaps }: { x: number; y: number; w: number; h: num
   );
 }
 
-export default function Monoscope({ caption = "Canale 5", night = false, resume }: { caption?: string; night?: boolean; resume?: string }) {
+/** `contain`: intero dentro un riquadro (il pannello della postazione); altrimenti riempie lo schermo tagliando i bordi. */
+export default function Monoscope({ caption = "", night = false, resume, contain = false }: { caption?: string; night?: boolean; resume?: string; contain?: boolean }) {
   const now = useClock();
   const time = now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={night ? `Fine delle trasmissioni. Riprendono alle ${resume}.` : `Monoscopio, ore ${time}`}
-      className="h-full w-full" preserveAspectRatio="xMidYMid slice" style={{ fontFamily: "var(--font-archivo)" }}>
+      className="h-full w-full" preserveAspectRatio={contain ? "xMidYMid meet" : "xMidYMid slice"} style={{ fontFamily: "var(--font-archivo)" }}>
       <rect width={W} height={H} fill="#8a8884" />
       {/* griglia */}
       {Array.from({ length: 16 }, (_, i) => <line key={`v${i}`} x1={i * 100 - 50} y1={0} x2={i * 100 - 50} y2={H} stroke={PAPER} strokeWidth={3} />)}
