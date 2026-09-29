@@ -10,6 +10,7 @@ import { answerFromNotes, sameThing, smalltalkReply, type Intent, type LlmConfig
 import type { BrainOp, Row, Store } from "./store.ts";
 import { cite, noteDay, origin, rank, search, SURE, type Embedder } from "./notes.ts";
 import type { Timers } from "./timers.ts";
+import type { Music } from "./music.ts";
 import { upcoming } from "./state.ts";
 
 export type Result = {
@@ -24,6 +25,8 @@ export type Ctx = {
   embedder?: Embedder | null;
   /** Un modello linguistico autorizzato per le note: risponde lui, basandosi solo sulle note trovate. */
   llm?: LlmConfig | null;
+  /** Spotify sul Pi (go-librespot); assente sul Mac o se non è installato. */
+  music?: Music | null;
 };
 
 const and = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} e ${xs.at(-1)}`);
@@ -43,7 +46,7 @@ export const shoppingList = (store: Store) =>
 export const openDeadlines = (store: Store) =>
   store.live("deadlines").filter((d) => !d.done_at).sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
 
-export async function execute(intent: Intent, { store, timers, householdId, timezone, now, embedder = null, llm = null }: Ctx): Promise<Result> {
+export async function execute(intent: Intent, { store, timers, householdId, timezone, now, embedder = null, llm = null, music = null }: Ctx): Promise<Result> {
   const today = zonedDate(now, timezone);
   const ops: BrainOp[] = [];
   const done = (r: Result) => {
@@ -108,6 +111,8 @@ export async function execute(intent: Intent, { store, timers, householdId, time
     }
     case "timer.stop": {
       const stopped = timers.stop(intent.label);
+      // "Basta" o "stop" senza timer da fermare: si ferma la musica, se suona.
+      if (!stopped.length && !intent.label && music?.now?.playing) return playMusic({ type: "music", action: "pause" }, music);
       return { reply: stopped.length ? (stopped.length > 1 ? "Fermati." : "Fermato.") : "Non c'era niente da fermare.", panel: null };
     }
 
@@ -183,6 +188,9 @@ export async function execute(intent: Intent, { store, timers, householdId, time
 
     case "show":
       return showView(intent.view, store, timers, now, timezone);
+
+    case "music":
+      return playMusic(intent, music);
     case "confirm": case "cancel":
       return { reply: "Non c'era niente da confermare.", panel: null };
     case "unknown": {
@@ -199,6 +207,37 @@ export async function execute(intent: Intent, { store, timers, householdId, time
 }
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** I comandi musicali: go-librespot sul Pi. Errori e assenze diventano frasi, non eccezioni. */
+async function playMusic(intent: Extract<Intent, { type: "music" }>, music: Music | null): Promise<Result> {
+  if (!music?.available) return { reply: "La musica non è attiva su questo Roby.", panel: null };
+  if (music.link) return { reply: "Prima collega Spotify: il codice è sullo schermo.", panel: { kind: "music" } };
+  try {
+    switch (intent.action) {
+      case "play": {
+        if (!intent.query) { await music.resume(); return { reply: "Riprendo.", panel: { kind: "music" } }; }
+        const found = await music.find(intent.query, intent.kind);
+        if (!found) return { reply: `Non trovo ${intent.query} su Spotify.`, panel: null };
+        await music.play(found.uri);
+        return { reply: `Metto ${found.label}.`, panel: { kind: "music" } };
+      }
+      case "resume": await music.resume(); return { reply: "Riprendo.", panel: { kind: "music" } };
+      case "pause": await music.pause(); return { reply: "In pausa.", panel: null };
+      case "next": await music.next(); return { reply: "Avanti.", panel: { kind: "music" } };
+      case "prev": await music.prev(); return { reply: "Torno indietro.", panel: { kind: "music" } };
+      case "louder": await music.setVolume(10, true); return { reply: "Più forte.", panel: null };
+      case "quieter": await music.setVolume(-10, true); return { reply: "Più piano.", panel: null };
+      case "volume": await music.setVolume(intent.level ?? 50); return { reply: `Volume a ${intent.level ?? 50}.`, panel: null };
+      case "what":
+        return music.now
+          ? { reply: `${music.now.playing ? "Sta suonando" : "In pausa"}: ${music.now.title} di ${music.now.artist}.`, panel: { kind: "music" } }
+          : { reply: "Non sta suonando niente.", panel: null };
+    }
+  } catch (e) {
+    console.warn("Musica:", (e as Error).message);
+    return { reply: "Spotify non risponde, riprova tra poco.", panel: null };
+  }
+}
 const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
 
 /** "Mostrami …": la vista al centro dello schermo, e una frase breve (la si guarda, non la si ascolta). */

@@ -4,7 +4,7 @@
 #   git clone https://github.com/aledocdonnini/homeboard ~/homeboard && ~/homeboard/device/install.sh
 #   device/install.sh           tutto: pacchetti, avvio automatico, config.txt, audio, dipendenze, servizi
 #   device/install.sh --update  solo dipendenze, modelli e servizi (lo usa bin/update.sh dopo un git pull)
-#   device/install.sh --solo deps units   solo i passi indicati: system, config, node, deps, units
+#   device/install.sh --solo deps units   solo i passi indicati: system, config, music, node, deps, units
 # Si può rilanciare: non sovrascrive la configurazione e non duplica le righe già aggiunte.
 set -euo pipefail
 
@@ -22,6 +22,9 @@ NODE_HOME="$HOME/.local/node"
 VENV="$REPO/.venv-voice"
 BOOT_CONFIG=/boot/firmware/config.txt
 MARKER="# ——— Homeboard:"
+# go-librespot: versione scelta e checksum del suo archivio arm64 (da aggiornare insieme).
+GLS_VERSION=0.10.2
+GLS_SHA256=800b174f066624edf37caec8266fd08e914e6fd837b2c92a4042aa21c0bafa4d
 UPDATE_ONLY=false
 [[ "${1:-}" == "--update" ]] && UPDATE_ONLY=true
 
@@ -40,7 +43,9 @@ system() {
   local browser=chromium
   apt-cache show chromium >/dev/null 2>&1 || browser=chromium-browser
   sudo apt-get install -y -q labwc "$browser" wlr-randr git curl xz-utils \
-    python3-venv python3-dev libportaudio2 libatomic1 alsa-utils
+    python3-venv python3-dev libportaudio2 libatomic1 alsa-utils \
+    pipewire pipewire-alsa pipewire-pulse wireplumber \
+    libasound2 libogg0 libvorbis0a libvorbisfile3 libflac12
 
   step "Configurazione in $CONF"
   mkdir -p "$CONF" "$HOME/.config/labwc" "$UNITS"
@@ -81,18 +86,31 @@ config() {
   sed "s#https://homeboard-roby.vercel.app#$origin#g" "$HERE/config/chromium-policy.json" \
     | sudo install -D -m 644 /dev/stdin /etc/chromium/policies/managed/homeboard.json
 
-  step "Audio: uscita HDMI ($HDMI_CARD), microfono USB"
-  local mic="${MIC_CARD:-}"
-  if [[ -z "$mic" ]]; then
-    # La prima scheda che registra (l'HDMI no): di solito è il microfono USB.
-    mic=$(arecord -l 2>/dev/null | sed -n 's/^card [0-9]*: \([^ ]*\) .*/\1/p' | head -1 || true)
-  fi
-  if [[ -z "$mic" ]]; then
-    echo "Nessun microfono trovato: collegalo e rilancia (o imposta MIC_CARD). Per ora ~/.asoundrc resta com'è."
+  step "Audio: PipeWire (mescola la voce di Roby e la musica, uscita HDMI, microfono USB)"
+  # La vecchia configurazione ALSA a mano (una sola app alla volta sull'HDMI) scavalcherebbe PipeWire.
+  [[ -f "$HOME/.asoundrc" ]] && grep -q "roby_out" "$HOME/.asoundrc" && rm -f "$HOME/.asoundrc"
+  systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service 2>/dev/null \
+    || echo "PipeWire partirà con la sessione dopo il riavvio."
+}
+
+music() {
+  step "Musica: go-librespot $GLS_VERSION (Spotify Connect, serve Premium)"
+  local bin="$HOME/.local/bin/go-librespot"
+  if [[ -x "$bin" && "$(cat "$HOME/.local/share/go-librespot.version" 2>/dev/null)" == "$GLS_VERSION" ]]; then
+    echo "Già alla versione $GLS_VERSION."
   else
-    sed "s/@HDMI_CARD@/$HDMI_CARD/g; s/@MIC_CARD@/$mic/g" "$HERE/config/asoundrc" >"$HOME/.asoundrc"
-    echo "Microfono: $mic."
+    local tmp; tmp=$(mktemp -d)
+    curl -fsSL -o "$tmp/gls.tgz" "https://github.com/devgianlu/go-librespot/releases/download/v$GLS_VERSION/go-librespot_linux_arm64.tar.gz"
+    # Il progetto non pubblica i checksum: questo è quello del file verificato quando è stata scelta la versione.
+    echo "$GLS_SHA256  $tmp/gls.tgz" | sha256sum -c --quiet -
+    mkdir -p "$HOME/.local/bin" "$HOME/.local/share"
+    tar -xzf "$tmp/gls.tgz" -C "$tmp" go-librespot
+    install -m 755 "$tmp/go-librespot" "$bin"
+    echo "$GLS_VERSION" >"$HOME/.local/share/go-librespot.version"
+    rm -rf "$tmp"
   fi
+  mkdir -p "$HOME/.config/go-librespot"
+  [[ -f "$HOME/.config/go-librespot/config.yml" ]] || cp "$HERE/config/go-librespot.yml" "$HOME/.config/go-librespot/config.yml"
 }
 
 install_node() {
@@ -148,7 +166,7 @@ units() {
     echo "systemd dell'utente non raggiungibile (niente sessione?): unità copiate, attivale dopo il riavvio."
     return
   fi
-  systemctl --user enable homeboard-brain.service homeboard-voice.service \
+  systemctl --user enable homeboard-brain.service homeboard-voice.service homeboard-music.service \
     homeboard-screen-off.timer homeboard-screen-on.timer homeboard-watchdog.timer \
     homeboard-refresh.timer homeboard-update.timer
 }
@@ -157,9 +175,9 @@ if [[ "${1:-}" == "--solo" ]]; then
   shift
   for s in "$@"; do
     case "$s" in
-      system | config | deps | units) "$s" ;;
+      system | config | music | deps | units) "$s" ;;
       node) install_node ;;
-      *) echo "Passo sconosciuto: $s (system, config, node, deps, units)" >&2; exit 2 ;;
+      *) echo "Passo sconosciuto: $s (system, config, music, node, deps, units)" >&2; exit 2 ;;
     esac
   done
   exit 0
@@ -167,6 +185,7 @@ fi
 
 if ! $UPDATE_ONLY; then system; fi
 config
+music
 install_node
 deps
 units
@@ -181,5 +200,6 @@ cat <<EOF
 2. Riavvia con: sudo reboot
 3. Sullo schermo compare un codice: abbina Roby dalla PWA (Impostazioni → Abbina una TV).
 Log:    journalctl --user -u homeboard-brain -u homeboard-voice -u homeboard-kiosk -f
-Audio:  speaker-test -c 2 -t wav   ·   $VENV/bin/python -m roby_voice.mics
+Audio:  wpctl status (uscita e microfono)   ·   $VENV/bin/python -m roby_voice.mics
+Musica: di' «Ehi Roby, metti De André»; la prima volta Roby mostra il codice per collegare Spotify.
 EOF

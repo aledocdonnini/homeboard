@@ -2,8 +2,9 @@
 // Le regole si provano in ordine: prima le più specifiche ("ferma il timer" prima di "togli il pane").
 // Il corpus di frasi in corpus.test.ts è la specifica: una frase nuova da capire, una riga nuova lì.
 
+import { guessCategory } from "@homeboard/core/items";
 import { zonedDate } from "@homeboard/core/recurrence";
-import { capitalize, itemName, sameThing, Utterance } from "./lexicon.ts";
+import { capitalize, itemName, sameThing, toNumber, Utterance } from "./lexicon.ts";
 import type { Context, Intent } from "./schema.ts";
 import { resolveWhen, takeDate, takeDuration, takeRecurrence, takeTime, zonedTime } from "./when.ts";
 
@@ -23,7 +24,7 @@ export function parse(text: string, ctx: Context): Intent {
   const chat = smalltalk(t) ?? show(t);
   if (chat) return chat;
 
-  const intent = confirmation(t) ?? timer(u, ctx) ?? note(u) ?? reminder(u, ctx) ?? deadline(u, ctx) ?? shopping(u, ctx) ?? question(u);
+  const intent = confirmation(t) ?? timer(u, ctx) ?? note(u) ?? reminder(u, ctx) ?? deadline(u, ctx) ?? music(u) ?? shopping(u, ctx) ?? question(u);
   return intent && intent.type !== "unknown" ? intent : { type: "unknown", text };
 }
 
@@ -66,6 +67,49 @@ function show(t: string): Intent | null {
   const what = m[1]!.replace(/^(?:mia|mie|miei|nostra|nostre|nostri)\s+/, "").trim();
   const view = VIEWS.find(([re]) => re.test(what))?.[1];
   return view ? { type: "show", view } : null;
+}
+
+// ——— Musica ———————————————————————————————————————————————————————————————————
+
+const MUSIC = String.raw`(?:la )?(?:musica|canzone|brano|pezzo|spotify)`;
+
+/** "Metti De André", "pausa musica", "alza", "cosa sta suonando?". "Basta" e "stop" da soli restano dei timer: brain,
+ * se non suona niente, li usa per fermare la musica. */
+function music(u: Utterance): Intent | null {
+  const t = u.text;
+  if (/^(?:cosa|che cosa|che canzone|che brano|chi) (?:sta suonando|stai suonando|suona|e questa|canta|e questo pezzo)|^(?:che|quale) canzone e$|^cos'e questa (?:canzone|musica)$/.test(t)) return { type: "music", action: "what" };
+  if (new RegExp(String.raw`^(?:metti in )?pausa(?: ${MUSIC})?$|^(?:ferma|stoppa|spegni|interrompi|basta con|togli) ${MUSIC}$`).test(t)) return { type: "music", action: "pause" };
+  if (new RegExp(String.raw`^(?:riprendi|continua|rimetti|fai ripartire|riparti con)(?: ${MUSIC})?$|^play$`).test(t)) return { type: "music", action: "resume" };
+  if (/^(?:avanti|salta|prossima|successiva|la prossima|passa alla prossima|cambia canzone|canzone successiva|prossima canzone|next)(?: canzone| brano)?$/.test(t)) return { type: "music", action: "next" };
+  if (/^(?:indietro|quella di prima|canzone precedente|precedente|torna indietro|rimetti quella di prima)(?: canzone)?$/.test(t)) return { type: "music", action: "prev" };
+  const level = /^(?:(?:metti|imposta) (?:il )?)?volume (?:a |al )?(\d{1,3}|[a-z]+)(?: per cento)?$/.exec(t);
+  if (level) {
+    const n = toNumber(level[1]!);
+    if (n !== null && n >= 0 && n <= 100) return { type: "music", action: "volume", level: Math.round(n) };
+  }
+  if (/^(?:alza|alzala|piu forte|volume su|alza il volume|alza la musica|alza un po'?)(?: (?:la musica|il volume|un po'?))?$/.test(t)) return { type: "music", action: "louder" };
+  if (/^(?:abbassa|abbassala|piu piano|volume giu|abbassa il volume|abbassa la musica|abbassa un po'?)(?: (?:la musica|il volume|un po'?))?$/.test(t)) return { type: "music", action: "quieter" };
+  const play = /^(?:metti su|metti|mettimi|suona|fammi sentire|fai partire|voglio sentire|ascoltiamo|mettiamo)\s+(.+)$/.exec(t);
+  if (play) {
+    const what = play[1]!;
+    // "Metti" vale anche per la spesa e i timer: è musica se lo dice ("canzone", "playlist", "un po' di", "suona"…)
+    // o se non è una cosa da comprare riconoscibile ("metti il latte" è spesa, "metti De André" no).
+    const saysMusic = /^(?:suona|fammi sentire|voglio sentire|ascoltiamo)\b/.test(t)
+      || new RegExp(String.raw`^(?:un po' di|qualcosa di|le canzoni di|la musica di|musica di|(?:la |l')?(?:mia |nostra )?(?:playlist|album|artista|canzone|brano|pezzo)\b)|${MUSIC}$|su spotify$`).test(what);
+    const shoppingLike = /\b(?:lista|spesa|carrello)\b/.test(what) || guessCategory(what.replace(/^(?:il|lo|la|i|gli|le|l'|un|uno|una|del|della|dei|delle)\s?/, "")) !== "altro";
+    const other = /\b(?:timer|sveglia|promemoria|allarme|nota)\b/.test(what);
+    if (other || (!saysMusic && shoppingLike)) return null;
+    // "metti la musica": riprendi. "metti la playlist del sabato", "metti l'album Creuza de mä", "metti De André".
+    if (new RegExp(String.raw`^${MUSIC}$`).test(what)) return { type: "music", action: "resume" };
+    u.take(/^(?:metti su|metti|mettimi|suona|fammi sentire|fai partire|voglio sentire|ascoltiamo|mettiamo)\s+/);
+    u.take(/^(?:un po' di|qualcosa di|le canzoni di|la musica di|musica di)\s+/);
+    const kind = u.take(/^(?:la |l')?(?:mia |nostra )?(playlist|album|artista|canzone|brano|pezzo)\s+(?:di |del |della |dei |degli |che si chiama )?/);
+    const query = u.rest("title").replace(/\s+(?:su spotify|dalla tv|in salotto)$/i, "").trim();
+    if (!query) return null;
+    const k = kind?.[1] === "playlist" ? "playlist" : kind?.[1] === "album" ? "album" : kind?.[1] === "artista" ? "artist" : kind ? "track" : undefined;
+    return { type: "music", action: "play", query, ...(k ? { kind: k } : {}) };
+  }
+  return null;
 }
 
 // ——— Sì / no ——————————————————————————————————————————————————————————————————

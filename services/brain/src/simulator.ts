@@ -186,6 +186,15 @@ async function run(intent: Intent, said: string, now: Date) {
       answer(said, reply, panels[intent.view]);
       break;
     }
+    case "music": {
+      // Finta riproduzione: per vedere il pannello "In onda" su /casa senza Spotify.
+      if (intent.action === "play") state.music = { title: intent.query ?? "Bocca di rosa", artist: "Fabrizio De André", album: "Volume 1", context: intent.kind === "playlist" ? intent.query ?? null : null, cover: null, playing: true };
+      else if (intent.action === "pause" && state.music) state.music = { ...state.music, playing: false };
+      else if (intent.action === "resume" && state.music) state.music = { ...state.music, playing: true };
+      reply = state.music ? (intent.action === "pause" ? "In pausa." : `Sta suonando ${state.music.title}.`) : "Non sta suonando niente.";
+      answer(said, reply, { kind: "music" });
+      break;
+    }
     case "smalltalk":
       reply = smalltalkReply(intent.topic, now, TZ);
       state.answer = null;

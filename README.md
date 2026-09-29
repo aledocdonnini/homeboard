@@ -30,6 +30,10 @@ Sintesi di cosa fa e idee per estenderlo: [`docs/sintesi.html`](docs/sintesi.htm
 - **Note, il second brain:** le cose da ritrovare ("la chiave di scorta è da mia madre"), scritte nella PWA, dette a Roby o condivise da un'altra app. Su Android basta *Condividi → Homeboard*: la nota arriva già compilata.
   - Roby le ritrova **per significato**, in locale ("dove sono le pile?" trova "le batterie di ricambio…"), e risponde citando data e origine della nota.
   - Nella PWA si cercano per parole, anche offline.
+- **Musica:** con Spotify Premium il Pi diventa un altoparlante Spotify Connect ("Roby").
+  - A voce: "metti De André", "metti la playlist del sabato", pausa, avanti, alza, "cosa sta suonando?".
+  - Sullo schermo il pannello "In onda". Mentre Roby ascolta o parla la musica si abbassa.
+  - L'account si collega una volta, col codice che Roby mostra.
 - **Premi e parla:** il tasto del microfono accanto al campo usa il riconoscimento vocale del browser (Chrome su Android, Safari su iOS) e passa dallo stesso interprete.
 - **Casa condivisa, solo su invito:** la casa la crea chi è autorizzato, e il proprietario aggiunge le persone con la loro email (entrano da sole al primo accesso). Chi non è in elenco non può registrarsi. I televisori si abbinano con un codice.
 - **La postazione di casa (`/casa`, sul Pi dentro la Crezar):** si usa solo a voce, lo schermo mostra e basta.

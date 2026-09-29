@@ -8,7 +8,7 @@ import type { Answer, HomeState, HomeTimer } from "./protocol.ts";
 export const ANSWER_MS = 30_000;
 /** Una vista chiesta apposta ("mostrami la spesa") resta un minuto: la si guarda, non la si ascolta. */
 export const VIEW_MS = 60_000;
-const VIEWS = new Set(["today", "timers", "deadlines", "reminders", "notes", "shopping"]);
+const VIEWS = new Set(["today", "timers", "deadlines", "reminders", "notes", "shopping", "music"]);
 /** Un promemoria entro un'ora, o una scadenza entro tre giorni (o superata), va in primo piano. */
 export const SOON_MINUTES = 60;
 export const WORRY_DAYS = 3;

@@ -250,6 +250,8 @@ export function useAssistant({ householdId, tz, list, reminders, deadlines, time
 
         case "show":
           return view(intent.view, text);
+        case "music":
+          return { text: "La musica la mette Roby, a casa: diglielo a voce." };
         case "smalltalk":
           return { text: smalltalkReply(intent.topic, now, tz) };
         case "confirm": case "cancel":

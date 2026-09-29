@@ -93,3 +93,28 @@ test("viste: mostrami…", async () => {
   assert.equal((await say("fammi vedere le note")).panel?.kind, "notes");
   void store;
 });
+
+test("musica: comandi, ricerca, pausa con «basta» quando non suona un timer", async () => {
+  const { store, ctx } = setup();
+  const calls: string[] = [];
+  const music = {
+    available: true, link: null as null | { url: string; code: string },
+    now: { title: "Bocca di rosa", artist: "Fabrizio De André", album: "Volume 1", context: null, cover: null, playing: true },
+    async find(query: string) { calls.push(`find:${query}`); return query === "boh boh" ? null : { uri: "spotify:artist:1", label: "Fabrizio De André" }; },
+    async play(uri: string) { calls.push(`play:${uri}`); },
+    async pause() { calls.push("pause"); }, async resume() { calls.push("resume"); },
+    async next() { calls.push("next"); }, async prev() { calls.push("prev"); },
+    async setVolume(p: number, rel = false) { calls.push(`volume:${p}:${rel}`); },
+  };
+  const say = (text: string, m: unknown = music) => execute(parse(text, { now, timezone: "Europe/Rome" }), { ...ctx, music: m as never });
+  assert.equal((await say("metti De André")).reply, "Metto Fabrizio De André.");
+  assert.equal((await say("metti boh boh")).reply, "Non trovo boh boh su Spotify.");
+  assert.equal((await say("cosa sta suonando?")).reply, "Sta suonando: Bocca di rosa di Fabrizio De André.");
+  assert.equal((await say("basta")).reply, "In pausa.", "nessun timer: «basta» ferma la musica");
+  assert.equal((await say("alza il volume")).reply, "Più forte.");
+  assert.equal((await say("volume a trenta")).reply, "Volume a 30.");
+  assert.deepEqual(calls, ["find:De André", "play:spotify:artist:1", "find:boh boh", "pause", "volume:10:true", "volume:30:false"]);
+  assert.equal((await say("metti De André", null)).reply, "La musica non è attiva su questo Roby.");
+  assert.equal((await say("metti De André", { ...music, link: { url: "https://spotify.com/pair", code: "ABCD" } })).reply, "Prima collega Spotify: il codice è sullo schermo.");
+  void store;
+});

@@ -33,6 +33,7 @@ Senza `voice` collegato, le frasi si scrivono nel terminale, una per riga. Ci so
 | `src/cloud.ts` | Supabase: sessione, abbinamento, invio della coda, download, realtime, battito, copia dei timer |
 | `src/executor.ts` | dall'intento all'azione, con la frase da dire e il pannello da mostrare |
 | `src/timers.ts` | i timer, salvati in locale |
+| `src/music.ts` | Spotify sul Pi: comandi a go-librespot, ricerca di playlist e catalogo, musica più bassa mentre Roby ascolta |
 | `src/notes.ts` | il second brain: embedding delle note, ricerca per significato, risposta con data e origine |
 | `src/state.ts` | lo stato di `/casa`; i promemoria da annunciare |
 

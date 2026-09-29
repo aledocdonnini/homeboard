@@ -1,0 +1,13 @@
+[Unit]
+Description=Homeboard: musica, Spotify Connect (go-librespot, comandato da brain)
+After=pipewire-pulse.service
+Wants=pipewire-pulse.service
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=%h/.local/bin/go-librespot --config_dir %h/.config/go-librespot
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

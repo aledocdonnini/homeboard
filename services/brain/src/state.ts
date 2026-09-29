@@ -16,6 +16,8 @@ export type Live = {
   answer: Answer | null;
   arrivedAt: string | null;
   pairing: { code: string; expiresAt: string } | null;
+  music?: HomeState["music"];
+  musicLink?: HomeState["musicLink"];
 };
 
 const DAY_MS = 86_400_000;
@@ -47,5 +49,7 @@ export function homeState(store: Store, timers: Timers, live: Live, now: Date): 
     reminders: h ? upcoming(store.live("reminders"), now, h.timezone).filter((r) => r.at.getTime() - now.getTime() < DAY_MS).map((r) => ({ title: r.title, at: r.at.toISOString() })) : [],
     deadlines: h ? openDeadlines(store).map((d) => ({ title: String(d.title), due: String(d.due_date) })) : [],
     arrivedAt: live.arrivedAt,
+    music: live.music ?? null,
+    musicLink: live.musicLink ?? null,
   };
 }

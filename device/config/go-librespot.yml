@@ -1,0 +1,16 @@
+# go-librespot: il Pi come altoparlante Spotify Connect ("Roby"). install.sh lo copia in ~/.config/go-librespot/.
+# L'account si collega una volta sola: go-librespot chiede un codice (spotify.com/pair), che Roby mostra su /casa.
+# Serve Spotify Premium. Il server locale lo usa brain per i comandi a voce (services/brain/src/music.ts).
+device_name: Roby
+device_type: speaker
+# L'audio passa da PipeWire (pipewire-pulse), che lo mescola con la voce di Roby e lo manda all'HDMI.
+audio_backend: pulseaudio
+initial_volume: 60
+volume_steps: 100
+zeroconf_enabled: false
+credentials:
+  type: device_auth
+server:
+  enabled: true
+  address: localhost
+  port: 3678

@@ -29,6 +29,17 @@ export const Intent = z.discriminatedUnion("type", [
   z.object({ type: z.literal("cancel") }),
   /** Cambiare vista sullo schermo ("mostrami i promemoria"): la TV e il computer mostrano quella parte al centro. */
   z.object({ type: z.literal("show"), view: z.enum(["today", "shopping", "timers", "reminders", "deadlines", "notes", "settings"]) }),
+  /**
+   * La musica (Spotify sul Pi). play con query: "metti De André", "metti la playlist del sabato" (kind dice cosa
+   * cercare, se detto); senza query riprende. volume: livello 0-100 ("volume a 30").
+   */
+  z.object({
+    type: z.literal("music"),
+    action: z.enum(["play", "pause", "resume", "next", "prev", "louder", "quieter", "volume", "what"]),
+    query: z.string().trim().min(1).max(120).optional(),
+    kind: z.enum(["playlist", "artist", "album", "track"]).optional(),
+    level: z.int().min(0).max(100).optional(),
+  }),
   /** Due chiacchiere: saluti, "come stai", "grazie", l'ora, la data, "chi sei", "cosa sai fare". */
   z.object({ type: z.literal("smalltalk"), topic: z.enum(["hello", "how", "thanks", "time", "date", "who", "help"]) }),
   z.object({ type: z.literal("unknown"), text: z.string() }),

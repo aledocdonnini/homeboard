@@ -23,6 +23,7 @@ import { dueBetween, homeState, type Household, type Live } from "./state.ts";
 import { Store } from "./store.ts";
 import { Timers } from "./timers.ts";
 import { index, loadEmbedder, type Embedder } from "./notes.ts";
+import { Music } from "./music.ts";
 
 // ——— Configurazione (variabili d'ambiente, o services/brain/.env) ———
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -55,6 +56,7 @@ mkdirSync(dirname(DB_PATH), { recursive: true });
 const store = new Store(DB_PATH);
 const timers = new Timers(store);
 const live: Live = { online: false, mic: "on", activity: "idle", answer: null, arrivedAt: null, pairing: null };
+const music = new Music();
 let pending: { intent: Intent; until: number } | null = null;
 
 // ——— /casa ———
@@ -70,6 +72,8 @@ function redraw() {
     queued = false;
     live.online = cloud.online;
     live.pairing = cloud.pairing;
+    live.music = music.now;
+    live.musicLink = music.link;
     toScreens({ type: "state", state: homeState(store, timers, live, new Date()) });
   });
 }
@@ -108,7 +112,17 @@ const voiceServer = createServer((socket) => {
 if (tcp) voiceServer.listen(Number(tcp[2]), tcp[1]);
 else voiceServer.listen(VOICE_SOCKET);
 
+// La musica si abbassa quando Roby ascolta o parla, e torna su quando ha finito (con un attimo di respiro).
+let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+function duckMusic(on: boolean) {
+  clearTimeout(restoreTimer);
+  if (on) void music.duck();
+  else restoreTimer = setTimeout(() => { if (live.activity === "idle") void music.restore(); }, 1500);
+}
+
 function onVoice(msg: VoiceToBrain) {
+  if (msg.type === "wake" || msg.type === "speaking") duckMusic(true);
+  if (msg.type === "nothing" || msg.type === "spoken") duckMusic(false);
   switch (msg.type) {
     case "wake": live.activity = "listening"; wakeScreen(); break;
     case "heard": void hear(msg.text); return;
@@ -159,7 +173,7 @@ async function hear(said: string) {
     return answer(said, "Tolgo tutto dalla lista della spesa? Dimmi sì o no.", { kind: "text" }, true);
   }
   pending = null;
-  const result = await execute(todo, { store, timers, householdId: house.id, timezone: house.timezone, now, embedder, llm });
+  const result = await execute(todo, { store, timers, householdId: house.id, timezone: house.timezone, now, embedder, llm, music });
   answer(said, result.reply, result.panel);
   if (todo.type.startsWith("timer.")) {
     toVoice({ type: "alarm", on: timers.ringing }); // "basta": l'allarme si spegne subito
@@ -218,6 +232,10 @@ loadEmbedder()
   .then((e) => { embedder = e; console.log("Ricerca nelle note per significato: pronta."); void indexNotes(); })
   .catch((e) => console.warn("Modello delle note non disponibile, cerco per parole:", (e as Error).message));
 setInterval(() => void indexNotes(), 30_000);
+
+// ——— Musica: cosa suona e se va collegato l'account, ogni 3 secondi ———
+setInterval(async () => { if (await music.refresh()) redraw(); }, 3000);
+void music.refresh();
 
 // ——— Supabase ———
 const cloud = new Cloud(store, env("SUPABASE_URL"), env("SUPABASE_PUBLISHABLE_KEY"), {

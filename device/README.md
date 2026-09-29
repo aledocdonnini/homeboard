@@ -7,6 +7,7 @@ La postazione di casa è un Raspberry Pi 5 dentro la scocca della Crezar, con un
 | `homeboard-brain` | `services/brain`: interpreta, esegue, tiene timer e copia locale, parla con Supabase e con lo schermo |
 | `homeboard-voice` | `services/voice`: parola di attivazione, trascrizione, voce di Roby; l'audio non esce dal Pi |
 | `homeboard-kiosk` | Chromium a tutto schermo su `/casa`, che legge tutto da `brain` su `ws://127.0.0.1:8765` |
+| `homeboard-music` | go-librespot: il Pi come altoparlante Spotify Connect "Roby", comandato a voce da `brain` |
 
 ## Cosa serve
 
@@ -36,7 +37,8 @@ Per GND vanno bene i pin 30, 34 o 39. Se un tasto "rimbalza" (un clic, due azion
    - installa Node 22 (dal sito ufficiale, con controllo del checksum) e le sole dipendenze di `brain`;
    - crea l'ambiente Python di `voice` e scarica i modelli (Vosk, Kokoro, openWakeWord: circa 500 MB);
    - aggiunge a `/boot/firmware/config.txt` i tasti e il watchdog;
-   - scrive `~/.asoundrc`, con uscita HDMI e microfono USB;
+   - attiva PipeWire, che mescola la voce di Roby e la musica e le manda all'HDMI;
+   - installa go-librespot (Spotify Connect), versione e checksum bloccati;
    - imposta login automatico, policy di Chromium e servizi systemd.
 
    Si può rilanciare senza danni. Con `--solo <passo>` rifà un passo solo: `system`, `config`, `node`, `deps`, `units`.
@@ -50,7 +52,8 @@ Per GND vanno bene i pin 30, 34 o 39. Se un tasto "rimbalza" (un clic, due azion
 
 ## Tarature (a TV montata)
 
-- **Audio.** `speaker-test -c 2 -t wav` deve uscire dal monitor. Poi `~/homeboard/.venv-voice/bin/python -m roby_voice.mics` mostra quale microfono sente. Se `install.sh` ha scelto la scheda sbagliata, imposta `MIC_CARD` (da `arecord -l`) e `HDMI_CARD` (da `aplay -l`), poi rilancia `--solo config`. Il volume si regola con `alsamixer`.
+- **Audio.** `wpctl status` elenca uscite e microfoni di PipeWire; quelli predefiniti hanno un asterisco. Se non sono l'HDMI del monitor e il microfono USB, usa `wpctl set-default <numero>`. `~/homeboard/.venv-voice/bin/python -m roby_voice.mics` mostra quale microfono sente davvero. Il volume generale si regola con `wpctl set-volume @DEFAULT_AUDIO_SINK@ 80%`.
+- **Spotify** (serve Premium). La prima volta che chiedi musica ("Ehi Roby, metti De André"), Roby mostra un codice: dal telefono vai su spotify.com/pair e inseriscilo. Da lì il Pi resta collegato al tuo account e compare come "Roby" fra i dispositivi Spotify Connect.
 - **Parola di attivazione.** Con `ROBY_DEBUG=1` nel file di configurazione, `journalctl --user -u homeboard-voice -f` mostra ogni secondo il volume del microfono e il punteggio della parola. Se Roby si attiva da solo, alza `ROBY_WAKE_THRESHOLD`; se non ti sente, abbassala. Per "Ehi Roby" invece di "Hey Jarvis" c'è la guida in `services/voice/README.md`.
 - **Velocità.** `python -m roby_voice.bench --voci` e `--registra`/`--dir` (vedi il README di `voice`) misurano sintesi e trascrizione sul Pi. Se Kokoro è lento, `ROBY_TTS=piper`.
 - **Cornice.** Se la scocca copre i bordi del pannello, aumenta `overscan` in `TV_URL`. Il valore è in percentuale del lato corto, da 0 a 20. Poi `systemctl --user restart homeboard-kiosk`.
@@ -88,7 +91,8 @@ La PWA si aggiorna da sola su Vercel; il kiosk la ricarica ogni notte.
   Inoltre: la sintassi e shellcheck di tutti gli script, e `brain` con `voice` e un microfono vero sul Mac.
 - **Da verificare sul Pi**, prima volta:
   - il nome del pacchetto di Chromium (`chromium` o `chromium-browser`);
-  - `~/.asoundrc`: l'HDMI del Pi 5 (`vc4hdmi0`) e il nome del microfono;
+  - l'audio con PipeWire: uscita HDMI e microfono USB come predefiniti, voce e musica insieme;
+  - go-librespot: collegamento dell'account col codice, musica dall'HDMI, e la musica che si abbassa quando Roby ascolta;
   - la policy di accesso alla rete locale della versione di Chromium installata (`chrome://policy`), perché la pagina deve poter aprire `ws://127.0.0.1:8765`;
   - i dispositivi dei tasti (`ls /dev/input/by-path/`: ogni riga `gpio-key` ne crea uno);
   - la velocità di Kokoro e Vosk (`bench`) e la fluidità di CRT e neve a 1920×1280. Se scatta, il primo da togliere è il tremolio (`crt-flicker` in `globals.css`), poi la banda di scansione.
@@ -96,7 +100,7 @@ La PWA si aggiorna da sola su Vercel; il kiosk la ricarica ogni notte.
 ## Comandi utili
 
 ```sh
-journalctl --user -u homeboard-brain -u homeboard-voice -u homeboard-kiosk -f   # log
+journalctl --user -u homeboard-brain -u homeboard-voice -u homeboard-music -u homeboard-kiosk -f   # log
 systemctl --user restart homeboard-brain homeboard-voice                         # riavvia Roby
 systemctl --user list-timers 'homeboard-*'                                       # prossimi eventi
 ~/homeboard/device/bin/screen.sh wake                                            # pannello acceso per 2 minuti

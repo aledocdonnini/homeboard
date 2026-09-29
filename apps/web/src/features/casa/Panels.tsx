@@ -21,6 +21,7 @@ export default function PanelView({ panel, state, now }: { panel: Panel; state: 
     case "ringing": return <Ringing timer={panel.timer} />;
     case "answer": {
       const view = panel.answer.panel;
+      if (view.kind === "music") return <MusicPanel state={state} />;
       if (view.kind === "today" || view.kind === "timers" || view.kind === "deadlines" || view.kind === "reminders" || view.kind === "notes") {
         return <ViewPanel view={view} state={state} now={now} />;
       }
@@ -271,3 +272,32 @@ const Empty = ({ title, hint }: { title: string; hint: string }) => (
     <p className="text-3xl text-muted">{hint}</p>
   </div>
 );
+
+/** Spotify sul Pi: cosa suona, oppure il codice per collegare l'account. */
+function MusicPanel({ state }: { state: HomeState }) {
+  if (state.musicLink) {
+    return (
+      <div className="flex h-full flex-col justify-center gap-6">
+        <p className="text-6xl font-semibold tracking-tight">Collega Spotify</p>
+        <p className="text-3xl leading-snug text-muted">Dal telefono vai su <strong className="text-ink">spotify.com/pair</strong> e scrivi il codice:</p>
+        <Big className="text-[8rem] tracking-[0.08em]">{state.musicLink.code}</Big>
+      </div>
+    );
+  }
+  const m = state.music;
+  if (!m) return <Empty title="Non sta suonando niente" hint="Di' «metti De André» o «metti la playlist del sabato»." />;
+  return (
+    <div className="grid h-full grid-cols-8 items-center gap-10">
+      {m.cover
+        // eslint-disable-next-line @next/next/no-img-element -- copertina da Spotify, già dimensionata
+        ? <img src={m.cover} alt="" className="col-span-3 aspect-square w-full rounded-module object-cover" />
+        : <div aria-hidden className="col-span-3 aspect-square w-full rounded-module bg-surface bg-dots" />}
+      <div className="col-span-5 flex flex-col gap-4">
+        <p className="text-3xl text-muted">{m.playing ? "In onda" : "In pausa"}{m.context ? ` · ${m.context}` : ""}</p>
+        <p className="text-7xl leading-[0.95] font-semibold tracking-tight">{m.title}</p>
+        <p className="text-4xl">{m.artist}</p>
+        <p className="text-2xl text-muted">{m.album}</p>
+      </div>
+    </div>
+  );
+}

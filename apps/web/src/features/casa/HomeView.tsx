@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Microphone, MicrophoneSlash, Timer, WifiSlash, WarningCircle } from "@phosphor-icons/react";
+import { Microphone, MicrophoneSlash, MusicNote, Timer, WifiSlash, WarningCircle } from "@phosphor-icons/react";
 import type { RobyFaceElement } from "roby-face";
 import type { HomeState } from "@homeboard/core/protocol";
 import RobyTile from "@/components/ui/RobyTile";
@@ -53,6 +53,13 @@ function Status({ state, connected, showTimers }: { state: HomeState; connected:
       <Mic state={state} />
       {showTimers && timers > 0 && (
         <p className="flex items-center gap-2 text-2xl text-muted"><Timer aria-hidden weight="bold" className="size-7" /> {timers} timer</p>
+      )}
+      {state.music?.playing && (
+        <p className="flex min-w-0 items-center gap-2 text-2xl text-muted"><MusicNote aria-hidden weight="bold" className="size-7 shrink-0" />
+          <span className="truncate">{state.music.title} · {state.music.artist}</span></p>
+      )}
+      {state.musicLink && (
+        <p className="flex items-center gap-2 text-2xl text-muted"><MusicNote aria-hidden weight="bold" className="size-7" /> Spotify: spotify.com/pair, codice {state.musicLink.code}</p>
       )}
       {!connected ? (
         <p className="flex items-center gap-2 text-2xl text-muted"><WarningCircle aria-hidden weight="bold" className="size-7" /> Roby non risponde</p>

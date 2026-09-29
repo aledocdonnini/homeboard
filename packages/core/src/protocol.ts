@@ -36,7 +36,20 @@ export type AnswerPanel =
   | { kind: "timers" }
   | { kind: "deadlines" }
   | { kind: "reminders"; items: { title: string; at: string }[] }
-  | { kind: "notes"; items: { body: string; when: string }[] };
+  | { kind: "notes"; items: { body: string; when: string }[] }
+  /** Cosa sta suonando su Spotify (i dati sono nello stato: music). */
+  | { kind: "music" };
+
+/** La musica del Pi (Spotify Connect, go-librespot). */
+export type NowPlaying = {
+  title: string;
+  artist: string;
+  album: string;
+  /** Playlist o album da cui arriva, se c'è. */
+  context: string | null;
+  cover: string | null;
+  playing: boolean;
+};
 
 export type Answer = { id: string; said: string; reply: string; panel: AnswerPanel; at: string };
 
@@ -55,6 +68,9 @@ export type HomeState = {
   deadlines: { title: string; due: PlainDate }[];
   /** Un elemento appena aggiunto da qualcuno (Roby sorpreso per qualche secondo). */
   arrivedAt: string | null;
+  /** Spotify sul Pi: cosa suona (null se niente o se la musica non c'è), e il codice per collegare l'account. */
+  music?: NowPlaying | null;
+  musicLink?: { url: string; code: string } | null;
 };
 
 export type ToHome =
