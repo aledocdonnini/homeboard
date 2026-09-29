@@ -433,8 +433,8 @@ verify_jwt = false
 project_id = "bjwmzfmbphbmdmrcxaap"
 
 [remotes.production.auth]
-site_url = "https://homeboard-puce.vercel.app"
-additional_redirect_urls = ["https://homeboard-puce.vercel.app/**"]
+site_url = "https://homeboard-roby.vercel.app"
+additional_redirect_urls = ["https://homeboard-roby.vercel.app/**"]
 
 [remotes.production.auth.email]
 # In locale 1 s per comodità; in produzione almeno un minuto fra due email alla stessa persona.

@@ -78,7 +78,7 @@ config() {
   step "Policy di Chromium per $TV_URL (accesso a brain su 127.0.0.1)"
   local origin
   origin=$(sed -E 's#^(https?://[^/]+).*#\1#' <<<"$TV_URL")
-  sed "s#https://homeboard-puce.vercel.app#$origin#g" "$HERE/config/chromium-policy.json" \
+  sed "s#https://homeboard-roby.vercel.app#$origin#g" "$HERE/config/chromium-policy.json" \
     | sudo install -D -m 644 /dev/stdin /etc/chromium/policies/managed/homeboard.json
 
   step "Audio: uscita HDMI ($HDMI_CARD), microfono USB"

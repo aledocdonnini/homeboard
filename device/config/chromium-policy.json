@@ -1,9 +1,9 @@
 {
   "LocalNetworkAccessAllowedForUrls": [
-    "https://homeboard-puce.vercel.app"
+    "https://homeboard-roby.vercel.app"
   ],
   "AutoplayAllowlist": [
-    "https://homeboard-puce.vercel.app"
+    "https://homeboard-roby.vercel.app"
   ],
   "NotificationsBlockedForUrls": [
     "*"
