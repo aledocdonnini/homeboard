@@ -19,7 +19,11 @@ export default function LoginForm() {
   const session = useSession();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  // Con la password si entra anche dalla PWA installata: il link della mail invece si apre nel browser.
+  const [mode, setMode] = useState<"password" | "email">("password");
   const [sent, setSent] = useState(false);
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -55,6 +59,28 @@ export default function LoginForm() {
     else setSent(true);
   }
 
+  async function signIn(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) setError(error.code === "invalid_credentials"
+      ? "Email o password sbagliate. Se non hai ancora una password, entra con il codice via email e impostala nelle Impostazioni."
+      : `Accesso non riuscito: ${error.message}`);
+  }
+
+  async function forgot() {
+    if (!email) return setError("Scrivi prima la tua email.");
+    setBusy(true);
+    setError("");
+    // Il link apre le Impostazioni già connessi, alla sezione per scegliere la password nuova.
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/impostazioni?password=1` });
+    setBusy(false);
+    if (error) setError(`Email non inviata: ${error.message}`);
+    else setNotice(`Ti ho scritto a ${email}: apri il link e scegli una password nuova nelle Impostazioni.`);
+  }
+
   async function verify(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -64,21 +90,37 @@ export default function LoginForm() {
     if (error) setError("Codice non valido o scaduto. Controlla l'ultima email o chiedine uno nuovo.");
   }
 
+  const switchTo = (m: "password" | "email") => { setMode(m); setError(""); setNotice(""); setSent(false); };
+
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-4 py-10">
       <div className="flex flex-col gap-4">
         <RobyTile expression={sent ? "listening" : "happy"} />
         <h1 className="text-4xl font-bold tracking-tight">Accedi a Homeboard</h1>
         <p className="text-muted">
-          {sent ? <>Ti ho scritto a <strong className="text-ink">{email}</strong>. Scrivi qui il codice, oppure apri il link nella mail.</>
-            : "Ti mando un codice via email. Niente password da ricordare."}
+          {mode === "password" ? "Con la tua email e la password."
+            : sent ? <>Ti ho scritto a <strong className="text-ink">{email}</strong>. Scrivi qui il codice, oppure apri il link nella mail.</>
+            : "Ti mando un codice via email. Il link nella mail si apre nel browser: nella app installata usa la password."}
         </p>
       </div>
-      {!sent ? (
+      {mode === "password" ? (
+        <form onSubmit={signIn} className="flex flex-col gap-4">
+          <Field id="email" label="Email" type="email" required autoComplete="email" inputMode="email"
+            value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Field id="password" label="Password" type="password" required autoComplete="current-password"
+            value={password} onChange={(e) => setPassword(e.target.value)} error={error} hint={notice || undefined} />
+          <Button type="submit" disabled={busy}>{busy ? "Accesso in corso" : "Entra"}</Button>
+          <div className="flex flex-wrap justify-between gap-x-4">
+            <Button variant="link" type="button" onClick={forgot} disabled={busy}>Password dimenticata?</Button>
+            <Button variant="link" type="button" onClick={() => switchTo("email")}>Entra con un codice via email</Button>
+          </div>
+        </form>
+      ) : !sent ? (
         <form onSubmit={sendCode} className="flex flex-col gap-4">
           <Field id="email" label="Email" type="email" required autoComplete="email" inputMode="email"
             value={email} onChange={(e) => setEmail(e.target.value)} error={error} />
           <Button type="submit" disabled={busy}>{busy ? "Invio in corso" : "Mandami il codice"}</Button>
+          <Button variant="link" type="button" onClick={() => switchTo("password")} className="self-start">Entra con la password</Button>
         </form>
       ) : (
         <form onSubmit={verify} className="flex flex-col gap-4">
@@ -86,7 +128,7 @@ export default function LoginForm() {
             pattern="[0-9]{6}" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             error={error} className="text-center [font-stretch:75%] font-semibold text-4xl tracking-[0.3em]" />
           <Button type="submit" disabled={busy}>{busy ? "Verifica in corso" : "Entra"}</Button>
-          <Button variant="link" onClick={() => { setSent(false); setError(""); }} className="self-start">Usa un’altra email</Button>
+          <Button variant="link" type="button" onClick={() => { setSent(false); setError(""); }} className="self-start">Usa un’altra email</Button>
         </form>
       )}
     </main>

@@ -13,6 +13,7 @@ import type { Household } from "./HouseholdGate";
 import AddMember from "./AddMember";
 import PushSettings from "./PushSettings";
 import Devices from "./Devices";
+import PasswordSettings from "./PasswordSettings";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -67,6 +68,8 @@ export default function HouseholdPanel({ house, session }: { house: Household; s
       <Devices house={house} />
 
       <PushSettings />
+
+      <PasswordSettings />
 
         {/* Sul telefono l'account va in fondo; su desktop sta nella colonna a sinistra. */}
         <section aria-labelledby="account-m" className="flex flex-col gap-3 border-t-4 border-ink pt-5 lg:hidden">
