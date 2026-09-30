@@ -298,6 +298,7 @@ export function useAssistant({ householdId, tz, list, reminders, deadlines, time
         }
       }
     } catch (e) {
+      console.warn(e);
       return { text: (e as Error).message.startsWith("Spotify: HTTP") ? "Spotify non risponde, riprova tra poco." : (e as Error).message, tone: "error" };
     }
   }

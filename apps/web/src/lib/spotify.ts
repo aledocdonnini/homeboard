@@ -81,7 +81,10 @@ async function api<T = unknown>(path: string, init: RequestInit = {}): Promise<T
   if (res.status === 204) return null;
   if (res.status === 404 && path.startsWith("/me/player")) throw new NoDevice("Nessun dispositivo Spotify attivo");
   if (res.status === 401) { disconnect(); throw new Error("Collegamento a Spotify scaduto: ricollegalo dalle Impostazioni."); }
-  if (!res.ok) throw new Error(`Spotify: HTTP ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.json().then((j: { error?: { message?: string } }) => j.error?.message, () => undefined);
+    throw new Error(`Spotify: HTTP ${res.status}${detail ? ` (${detail})` : ""}`);
+  }
   return (res.headers.get("content-type")?.includes("json") ? res.json() : null) as Promise<T | null>;
 }
 
@@ -123,7 +126,7 @@ export async function find(query: string, kind?: Kind): Promise<Found | null> {
     if (hit) return hit;
   }
   const types = kind ? [kind] : ["artist", "track", "album", "playlist"];
-  const data = await api<SearchResult>(`/search?${new URLSearchParams({ q: query, type: types.join(","), limit: "3", market: "from_token" })}`);
+  const data = await api<SearchResult>(`/search?${new URLSearchParams({ q: query, type: types.join(","), limit: "3" })}`);
   return pickSearch(query, data ?? {}, kind);
 }
 
