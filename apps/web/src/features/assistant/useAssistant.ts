@@ -10,6 +10,7 @@ import { nextDue, open, shortDate, whenLabel, type Deadline } from "@/features/d
 import { dayLabel, upcoming, type Reminder } from "@/features/reminders/schedule";
 import type { useShoppingList } from "@/features/shopping/useShoppingList";
 import type { Timer } from "@/features/timers/useTimers";
+import * as spotify from "@/lib/spotify";
 
 export type View = Extract<Intent, { type: "show" }>["view"];
 export type Reply = {
@@ -31,6 +32,8 @@ type Deps = {
   deadlines: Deadline[];
   timers: Timer[];
   reload: () => void;
+  /** Dopo un comando musicale: aggiorna subito "cosa suona" (la postazione sul computer). */
+  refreshMusic?: () => void;
 };
 
 export const HREF: Record<View, string> = {
@@ -73,7 +76,7 @@ const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : 
  * della PWA. La spesa funziona anche offline (coda); promemoria, scadenze e note chiedono la rete.
  * Le azioni distruttive aspettano un "sì". Ogni risposta porta il suo pannello, per la postazione sul computer.
  */
-export function useAssistant({ householdId, tz, list, reminders, deadlines, timers, reload }: Deps) {
+export function useAssistant({ householdId, tz, list, reminders, deadlines, timers, reload, refreshMusic }: Deps) {
   const [reply, setReply] = useState<Reply | null>(null);
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [pending, setPending] = useState<Intent | null>(null);
@@ -251,7 +254,7 @@ export function useAssistant({ householdId, tz, list, reminders, deadlines, time
         case "show":
           return view(intent.view, text);
         case "music":
-          return { text: "La musica la mette Roby, a casa: diglielo a voce." };
+          return music(intent);
         case "smalltalk":
           return { text: smalltalkReply(intent.topic, now, tz) };
         case "confirm": case "cancel":
@@ -261,6 +264,41 @@ export function useAssistant({ householdId, tz, list, reminders, deadlines, time
           void supabase.from("unparsed_log").insert({ household_id: householdId, text: text.slice(0, 500), source: "pwa" }).then(() => {});
           return { text: "Non ho capito. Prova con \"aggiungi il latte\" o \"mostrami i promemoria\".", tone: "error" };
       }
+    }
+  }
+
+  /** La musica con le API di Spotify (lib/spotify.ts), sullo Spotify aperto: stesse frasi di Roby sul Pi. */
+  async function music(intent: Extract<Intent, { type: "music" }>): Promise<Reply> {
+    if (!spotify.connected()) {
+      return { text: spotify.CLIENT_ID ? "Collega Spotify dalle Impostazioni e poi riprova." : "La musica la mette Roby, a casa: diglielo a voce.", href: "/impostazioni?spotify=1" };
+    }
+    const done = (text: string, show = true): Reply => {
+      refreshMusic?.();
+      return { text, ...(show ? { panel: { kind: "music" as const } } : {}) };
+    };
+    try {
+      switch (intent.action) {
+        case "play": {
+          if (!intent.query) { await spotify.resume(); return done("Riprendo."); }
+          const found = await spotify.find(intent.query, intent.kind);
+          if (!found) return { text: `Non trovo ${intent.query} su Spotify.` };
+          await spotify.play(found.uri);
+          return done(`Metto ${found.label}.`);
+        }
+        case "resume": await spotify.resume(); return done("Riprendo.");
+        case "pause": await spotify.pause(); return done("In pausa.", false);
+        case "next": await spotify.next(); return done("Avanti.");
+        case "prev": await spotify.prev(); return done("Torno indietro.");
+        case "louder": await spotify.setVolume(10, true); return done("Più forte.", false);
+        case "quieter": await spotify.setVolume(-10, true); return done("Più piano.", false);
+        case "volume": await spotify.setVolume(intent.level ?? 50); return done(`Volume a ${intent.level ?? 50}.`, false);
+        case "what": {
+          const now = await spotify.nowPlaying();
+          return now ? done(`${now.playing ? "Sta suonando" : "In pausa"}: ${now.title} di ${now.artist}${now.device ? `, su ${now.device}` : ""}.`) : { text: "Non sta suonando niente." };
+        }
+      }
+    } catch (e) {
+      return { text: (e as Error).message.startsWith("Spotify: HTTP") ? "Spotify non risponde, riprova tra poco." : (e as Error).message, tone: "error" };
     }
   }
 

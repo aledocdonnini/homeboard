@@ -34,6 +34,7 @@ Sintesi di cosa fa e idee per estenderlo: [`docs/sintesi.html`](docs/sintesi.htm
   - A voce: "metti De André", "metti la playlist del sabato", pausa, avanti, alza, "cosa sta suonando?".
   - Sullo schermo il pannello "In onda". Mentre Roby ascolta o parla la musica si abbassa.
   - L'account si collega una volta, col codice che Roby mostra.
+  - Anche dalla PWA (API ufficiali di Spotify): dopo *Impostazioni → Collega Spotify*, gli stessi comandi comandano lo Spotify che hai aperto, e sul computer compare il pannello "In onda".
 - **Premi e parla:** il tasto del microfono accanto al campo usa il riconoscimento vocale del browser (Chrome su Android, Safari su iOS) e passa dallo stesso interprete.
 - **Casa condivisa, solo su invito:** la casa la crea chi è autorizzato, e il proprietario aggiunge le persone con la loro email (entrano da sole al primo accesso). Chi non è in elenco non può registrarsi. I televisori si abbinano con un codice.
 - **La postazione di casa (`/casa`, sul Pi dentro la Crezar):** si usa solo a voce, lo schermo mostra e basta.
@@ -137,6 +138,7 @@ npm run dev                                                       # la PWA su ht
 | PWA (Vercel e `apps/web/.env.local`) | `NEXT_PUBLIC_SUPABASE_URL` | URL del progetto Supabase |
 | | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | chiave pubblica (publishable) |
 | | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | chiave VAPID pubblica, per iscrivere il browser alle push |
+| | `NEXT_PUBLIC_SPOTIFY_CLIENT_ID` | facoltativa: Client ID dell'app Spotify (developer.spotify.com, solo Web API; redirect `<origine>/spotify`). Con questa, "metti De André" funziona anche dalla PWA |
 | Edge Function (`supabase secrets` e `supabase/functions/.env`) | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | coppia VAPID |
 | | `VAPID_SUBJECT` | `mailto:` di contatto per i servizi push |
 | | `NOTIFY_SECRET` | segreto con cui pg_cron chiama la funzione |

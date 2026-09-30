@@ -7,7 +7,7 @@
 // Senza go-librespot (sul Mac, o se non è installato) tutto questo risponde "la musica non c'è".
 
 import type { NowPlaying } from "@homeboard/core/protocol";
-import { sameThing } from "@homeboard/intents";
+import { pickPlaylist, pickSearch, type Found, type Kind, type SearchResult } from "@homeboard/core/music";
 
 const BASE = (process.env.LIBRESPOT_URL ?? "http://127.0.0.1:3678").replace(/\/+$/, "");
 /** Mentre Roby ascolta o parla, la musica scende a questa frazione del volume. */
@@ -16,8 +16,7 @@ const DUCK = 0.25;
 type Track = { name: string; artist_names: string[]; album_name: string; album_cover_url: string | null };
 type Status = { stopped: boolean; paused: boolean; context_name: string | null; track: Track | null };
 
-export type Kind = "playlist" | "artist" | "album" | "track";
-export type Found = { uri: string; label: string };
+export type { Found, Kind };
 
 export class Music {
   now: NowPlaying | null = null;
@@ -98,20 +97,15 @@ export class Music {
     } catch { /* go-librespot riavviato: riparte col suo volume */ }
   }
 
-  /** Cosa mettere per "metti <query>": playlist dell'account, poi il catalogo. */
+  /** Cosa mettere per "metti <query>": playlist dell'account, poi il catalogo (scelta in packages/core/src/music.ts). */
   async find(query: string, kind?: Kind): Promise<Found | null> {
     if (!kind || kind === "playlist") {
       const res = await this.#call("/library/playlists?limit=500");
       if (res.status === 200) {
-        const { items } = (await res.json()) as { items: { uri: string; name: string }[] };
-        const hit = items.find((p) => p.name.toLowerCase() === query.toLowerCase()) ?? items.find((p) => sameThing(query, p.name));
-        if (hit) return { uri: hit.uri, label: `la playlist ${hit.name}` };
+        const hit = pickPlaylist(query, ((await res.json()) as { items: { uri: string; name: string }[] }).items);
+        if (hit) return hit;
       }
     }
-    return this.#search(query, kind);
-  }
-
-  async #search(query: string, kind?: Kind): Promise<Found | null> {
     const tokenRes = await this.#call("/token", { method: "POST" });
     if (tokenRes.status !== 200) return null;
     const { token } = (await tokenRes.json()) as { token: string };
@@ -119,16 +113,6 @@ export class Music {
     const url = `https://api.spotify.com/v1/search?${new URLSearchParams({ q: query, type: types.join(","), limit: "3", market: "from_token" })}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`Ricerca Spotify: HTTP ${res.status}`);
-    type Item = { uri: string; name: string; artists?: { name: string }[] } | null;
-    const data = (await res.json()) as Partial<Record<`${Kind}s`, { items: Item[] }>>;
-    const first = (k: Kind) => data[`${k}s`]?.items.find((i): i is NonNullable<Item> => !!i) ?? null;
-    // Senza indicazione: l'artista se il nome corrisponde ("metti De André"), altrimenti il primo brano, album, playlist.
-    const artist = first("artist");
-    if (!kind && artist && sameThing(query, artist.name)) return { uri: artist.uri, label: artist.name };
-    for (const k of kind ? [kind] : (["track", "album", "playlist", "artist"] as Kind[])) {
-      const i = first(k);
-      if (i) return { uri: i.uri, label: i.artists?.length ? `${i.name} di ${i.artists[0]!.name}` : i.name };
-    }
-    return null;
+    return pickSearch(query, (await res.json()) as SearchResult, kind);
   }
 }

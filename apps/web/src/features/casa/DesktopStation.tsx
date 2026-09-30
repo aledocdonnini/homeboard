@@ -17,6 +17,8 @@ import { upcoming, type Reminder } from "@/features/reminders/schedule";
 import { useShoppingList } from "@/features/shopping/useShoppingList";
 import { useTimers } from "@/features/timers/useTimers";
 import Station from "./Station";
+import * as spotify from "@/lib/spotify";
+import type { NowPlaying } from "@homeboard/core/protocol";
 
 const DAY_MS = 86_400_000;
 
@@ -33,9 +35,26 @@ export default function DesktopStation({ house, view }: { house: Household; view
   const reminders = useRows<Reminder>("reminders", house.id);
   const deadlines = useRows<Deadline>("deadlines", house.id);
   const { timers } = useTimers(house.id);
+
+  // Cosa suona su Spotify (se collegato su questo dispositivo), ogni 5 secondi e subito dopo un comando.
+  const [music, setMusic] = useState<NowPlaying | null>(null);
+  const refreshMusic = () => {
+    if (!spotify.connected()) return;
+    // Spotify aggiorna lo stato un attimo dopo il comando.
+    setTimeout(() => void spotify.nowPlaying().then(setMusic).catch(() => {}), 800);
+  };
+  useEffect(() => {
+    if (!spotify.connected()) return;
+    const poll = () => void spotify.nowPlaying().then(setMusic).catch(() => {});
+    poll();
+    const every = setInterval(poll, 5000);
+    return () => clearInterval(every);
+  }, []);
+
   const assistant = useAssistant({
     householdId: house.id, tz, list, reminders: reminders.rows ?? [], deadlines: deadlines.rows ?? [], timers: timers ?? [],
     reload: () => { void reminders.reload(); void deadlines.reload(); },
+    refreshMusic,
   });
 
   // La vista dell'indirizzo, una volta caricati i dati. "Oggi" è il riposo: non serve aprirla.
@@ -72,6 +91,7 @@ export default function DesktopStation({ house, view }: { house: Household; view
       .map((u) => ({ title: u.reminder.title, at: u.at.toISOString() })),
     deadlines: open(deadlines.rows ?? [], zonedDate(now, tz)).map((d) => ({ title: d.deadline.title, due: d.deadline.due_date })),
     arrivedAt: null,
+    music,
   };
 
   return (
