@@ -282,6 +282,12 @@ export function useAssistant({ householdId, tz, list, reminders, deadlines, time
           if (!intent.query) { await spotify.resume(); return done("Riprendo."); }
           const found = await spotify.find(intent.query, intent.kind);
           if (!found) return { text: `Non trovo ${intent.query} su Spotify.` };
+          // Sul telefono si apre l'app Spotify lì: se un dispositivo c'è già parte subito, se no l'app si apre su quello trovato.
+          if (!matchMedia("(min-width: 1024px)").matches) {
+            await spotify.play(found.uri).catch((e) => { if (!(e instanceof spotify.NoDevice)) throw e; });
+            location.assign(found.uri);
+            return { text: `Metto ${found.label}.`, href: found.uri };
+          }
           await spotify.play(found.uri);
           return done(`Metto ${found.label}.`);
         }
